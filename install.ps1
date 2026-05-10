@@ -33,8 +33,25 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$Modules = @(
+  foreach ($module in $Modules) {
+    foreach ($part in ($module -split ",")) {
+      $trimmed = $part.Trim()
+      if (-not [string]::IsNullOrWhiteSpace($trimmed)) {
+        $trimmed
+      }
+    }
+  }
+)
+
 $Script:Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Script:ManifestRoot = Join-Path $Script:Root "manifests"
+$Script:KnownToolPaths = @(
+  "C:\Program Files\nodejs",
+  (Join-Path $env:APPDATA "npm"),
+  (Join-Path $env:APPDATA "Python\Python312\Scripts"),
+  (Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Links")
+) + (Get-ChildItem -Path (Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages") -Directory -Filter "astral-sh.uv_*" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
 $Script:Report = [ordered]@{
   generatedAt = (Get-Date).ToString("o")
   workspacePath = $WorkspacePath
@@ -42,6 +59,12 @@ $Script:Report = [ordered]@{
   includeWsl = [bool]$IncludeWsl
   gameStudiosMode = $GameStudiosMode
   events = @()
+}
+
+foreach ($toolPath in $Script:KnownToolPaths) {
+  if ($toolPath -and (Test-Path $toolPath) -and ($env:Path -notlike "*$toolPath*")) {
+    $env:Path = "$toolPath;$env:Path"
+  }
 }
 
 function Write-Step {
@@ -98,7 +121,47 @@ function Read-Manifest {
 
 function Test-CommandAvailable {
   param([Parameter(Mandatory)][string]$Name)
-  return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
+  return [bool](Resolve-NativeCommand -Name $Name)
+}
+
+function Resolve-NativeCommand {
+  param([Parameter(Mandatory)][string]$Name)
+
+  $commands = Get-Command $Name -ErrorAction SilentlyContinue
+  foreach ($command in @($commands)) {
+    if ($command.Source -and ($command.Source -match "\.(exe|cmd|bat)$")) {
+      return $command.Source
+    }
+  }
+
+  if ($Name -match "\.(exe|cmd|bat)$") {
+    $names = @($Name)
+  } else {
+    $names = @("$Name.exe", "$Name.cmd", "$Name.bat")
+  }
+
+  foreach ($dir in ($env:Path -split ";" | Where-Object { $_ })) {
+    try {
+      if (-not (Test-Path $dir)) {
+        continue
+      }
+    } catch {
+      continue
+    }
+
+    foreach ($candidateName in $names) {
+      $candidate = Join-Path $dir $candidateName
+      try {
+        if ((Test-Path $candidate) -and -not (Get-Item $candidate).PSIsContainer) {
+          return $candidate
+        }
+      } catch {
+        continue
+      }
+    }
+  }
+
+  return $null
 }
 
 function Invoke-LoggedCommand {
@@ -113,7 +176,12 @@ function Invoke-LoggedCommand {
     return
   }
 
-  & $Command @Arguments
+  $resolved = Resolve-NativeCommand -Name $Command
+  if (-not $resolved) {
+    $resolved = $Command
+  }
+
+  & $resolved @Arguments
   if ($LASTEXITCODE -ne 0) {
     throw "$Module command failed: $Command $($Arguments -join ' ')"
   }
@@ -248,10 +316,10 @@ function Install-Toolchain {
     }
   }
 
-  if (Test-CommandAvailable -Name "python") {
-    Write-Step -Status "PASS" -Module $module -Message "python is available."
-  } elseif (Test-CommandAvailable -Name "py") {
+  if (Test-CommandAvailable -Name "py") {
     Write-Step -Status "PASS" -Module $module -Message "py launcher is available."
+  } elseif (Test-CommandAvailable -Name "python") {
+    Write-Step -Status "PASS" -Module $module -Message "python is available."
   } else {
     Write-Step -Status "WARN" -Module $module -Message "Python is missing. Some MCP servers may need Python or uv."
   }
@@ -279,16 +347,100 @@ function Install-ClaudeCode {
   Write-Step -Status "PASS" -Module $module -Message "Claude Code install command completed."
 }
 
+function Install-PythonUserPackage {
+  param(
+    [Parameter(Mandatory)][string]$Module,
+    [Parameter(Mandatory)][string]$Package
+  )
+
+  $py = Resolve-NativeCommand -Name "py"
+  if ($py) {
+    Invoke-LoggedCommand -Module $Module -Command $py -Arguments @("-3.12", "-m", "pip", "install", "--user", $Package)
+    return
+  }
+
+  $python = Resolve-NativeCommand -Name "python"
+  if ($python) {
+    Invoke-LoggedCommand -Module $Module -Command $python -Arguments @("-m", "pip", "install", "--user", $Package)
+    return
+  }
+
+  Write-Step -Status "WARN" -Module $Module -Message "Python launcher is missing; $Package install skipped."
+}
+
+function Install-UnrealMcpTools {
+  $module = "unreal"
+
+  if (Test-CommandAvailable -Name "npm") {
+    if (-not (Test-CommandAvailable -Name "ue-cli")) {
+      Invoke-LoggedCommand -Module $module -Command "npm" -Arguments @("install", "-g", "unrealcli")
+      Write-Step -Status "PASS" -Module $module -Message "Unreal CLI install command completed."
+    } else {
+      Write-Step -Status "PASS" -Module $module -Message "Unreal CLI is already available."
+    }
+  } else {
+    Write-Step -Status "WARN" -Module $module -Message "npm is missing; Unreal CLI install skipped."
+  }
+
+  if (-not (Test-CommandAvailable -Name "unrealmcp")) {
+    Install-PythonUserPackage -Module $module -Package "unrealmcp"
+  } else {
+    Write-Step -Status "PASS" -Module $module -Message "Unreal MCP Python command is already available."
+  }
+}
+
+function Configure-UnrealMcp {
+  $target = Join-Path $WorkspacePath ".mcp.json"
+  if (-not (Test-Path $target)) {
+    return
+  }
+
+  $config = Get-Content -Raw -Path $target | ConvertFrom-Json
+  if (-not $config.mcpServers.unreal) {
+    return
+  }
+
+  $pythonScripts = Join-Path $env:APPDATA "Python\Python312\Scripts"
+  if ((Test-Path $pythonScripts) -and ($env:Path -notlike "*$pythonScripts*")) {
+    $env:Path = "$pythonScripts;$env:Path"
+  }
+
+  $command = Resolve-NativeCommand -Name "unrealmcp"
+  if (-not $command) {
+    $command = "unrealmcp"
+  }
+
+  $server = $config.mcpServers.unreal
+  $server.PSObject.Properties.Remove("args")
+  $server | Add-Member -NotePropertyName "type" -NotePropertyValue "stdio" -Force
+  $server.command = $command
+  if (-not $server.env) {
+    $server | Add-Member -NotePropertyName "env" -NotePropertyValue ([pscustomobject]@{}) -Force
+  }
+  $server.env | Add-Member -NotePropertyName "UNREAL_MCP_HOST" -NotePropertyValue "127.0.0.1" -Force
+  $server.env | Add-Member -NotePropertyName "UNREAL_MCP_PORT" -NotePropertyValue "55557" -Force
+
+  if ($DryRun) {
+    Write-Step -Status "SKIP" -Module "unreal" -Message "Dry-run Unreal MCP config update skipped." -Data @{ command = $command }
+    return
+  }
+
+  $config | ConvertTo-Json -Depth 8 | Set-Content -Path $target -Encoding UTF8
+  Write-Step -Status "PASS" -Module "unreal" -Message "Claude Code Unreal MCP entry updated." -Data @{ target = $target; command = $command }
+}
+
 function Find-CcSwitchApp {
   $commands = @("ccswitch", "cc-switch")
   foreach ($command in $commands) {
-    $match = Get-Command $command -ErrorAction SilentlyContinue
-    if ($match) { return $match.Source }
+    $match = Resolve-NativeCommand -Name $command
+    if ($match) { return $match }
   }
 
   $paths = @(
+    (Join-Path $env:LOCALAPPDATA "Programs\CC Switch\cc-switch.exe"),
     (Join-Path $env:LOCALAPPDATA "Programs\CC Switch\CC Switch.exe"),
     (Join-Path $env:LOCALAPPDATA "Programs\cc-switch\CC Switch.exe"),
+    (Join-Path $env:LOCALAPPDATA "Programs\cc-switch\cc-switch.exe"),
     (Join-Path $env:ProgramFiles "CC Switch\CC Switch.exe")
   )
 
@@ -400,16 +552,49 @@ function Install-GameStudiosTemplate {
   }
 
   Configure-ClaudeMcp -TargetPath $TargetPath
+  if ($DryRun) {
+    Write-Step -Status "SKIP" -Module $module -Message "Dry-run Game Studios template configuration skipped." -Data @{ target = $TargetPath; mode = $GameStudiosMode }
+    return
+  }
+
   Write-Step -Status "PASS" -Module $module -Message "Game Studios template configured." -Data @{ target = $TargetPath; mode = $GameStudiosMode }
 }
 
 function Find-Unreal {
+  $manifestRoot = "C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests"
+  $manifestMatches = @()
+  if (Test-Path $manifestRoot) {
+    $manifestMatches = Get-ChildItem -Path $manifestRoot -Filter "*.item" -ErrorAction SilentlyContinue |
+      ForEach-Object {
+        try {
+          $item = Get-Content -Raw -Path $_.FullName | ConvertFrom-Json
+          if ($item.DisplayName -eq "Unreal Engine" -and $item.AppName -match "^UE_5" -and (Test-Path $item.InstallLocation)) {
+            [pscustomobject]@{
+              Version = [version]($item.AppName -replace "^UE_", "")
+              Path = $item.InstallLocation
+            }
+          }
+        } catch {
+          $null
+        }
+      } |
+      Sort-Object Version -Descending
+  }
+  if ($manifestMatches) {
+    return $manifestMatches[0].Path
+  }
+
   $roots = @(
     "${env:ProgramFiles}\Epic Games",
-    "${env:ProgramFiles(x86)}\Epic Games"
+    "${env:ProgramFiles(x86)}\Epic Games",
+    "D:\Epic Games",
+    "E:\Epic Games",
+    "F:\Program Files\Epic Games"
   ) | Where-Object { $_ -and (Test-Path $_) }
   foreach ($root in $roots) {
-    $match = Get-ChildItem -Directory -Path $root -Filter "UE_5*" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $match = Get-ChildItem -Directory -Path $root -Filter "UE_5*" -ErrorAction SilentlyContinue |
+      Sort-Object Name -Descending |
+      Select-Object -First 1
     if ($match) { return $match.FullName }
   }
   return $null
@@ -479,6 +664,17 @@ function Configure-EngineBridge {
 此目录只记录课程安装器检测到的本机路径和上游适配器。实际插件安装步骤见 docs/getting-started.md。
 "@
 
+  $content = @(
+    "# $BridgeName local bridge record",
+    "",
+    "- Host path: $path",
+    "- Upstream: $Upstream",
+    "- Created: $(Get-Date -Format "o")",
+    "",
+    "This directory records the host application path detected by the course installer.",
+    "Follow docs/getting-started.md for any plugin enablement steps inside the editor."
+  ) -join [Environment]::NewLine
+
   if ($DryRun) {
     Write-Step -Status "SKIP" -Module $Module -Message "Dry-run bridge record skipped." -Data @{ hostPath = $path }
     return
@@ -516,7 +712,11 @@ function Invoke-ModuleLifecycle {
     "claude-code" { Install-ClaudeCode }
     "cc-switch" { Install-CcSwitch }
     "game-studios" { Install-GameStudiosTemplate -TargetPath $WorkspacePath }
-    "unreal" { Configure-EngineBridge -Module "unreal" -Finder ${function:Find-Unreal} -BridgeName "Unreal Engine 5" -Upstream $manifest.upstream.url }
+    "unreal" {
+      Install-UnrealMcpTools
+      Configure-EngineBridge -Module "unreal" -Finder ${function:Find-Unreal} -BridgeName "Unreal Engine 5" -Upstream $manifest.upstream.url
+      Configure-UnrealMcp
+    }
     "unity" { Configure-EngineBridge -Module "unity" -Finder ${function:Find-Unity} -BridgeName "Unity" -Upstream $manifest.upstream.url }
     "godot" { Configure-EngineBridge -Module "godot" -Finder ${function:Find-Godot} -BridgeName "Godot 4" -Upstream $manifest.upstream.url }
     "blender" { Configure-EngineBridge -Module "blender" -Finder ${function:Find-Blender} -BridgeName "Blender" -Upstream $manifest.upstream.url }

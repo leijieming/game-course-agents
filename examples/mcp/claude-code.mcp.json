@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "unreal": {
-      "command": "uvx",
-      "args": ["unrealmcp"],
+      "type": "stdio",
+      "command": "unrealmcp",
       "env": {
         "UNREAL_MCP_HOST": "127.0.0.1",
-        "UNREAL_MCP_PORT": "8765"
+        "UNREAL_MCP_PORT": "55557"
       }
     },
     "unity": {

@@ -12,15 +12,15 @@
     "requiredMajor": 5
   },
   "install": {
-    "strategy": "detect-host-and-use-uvx",
-    "command": "uvx unrealmcp"
+    "strategy": "detect-host-install-cli-and-python-mcp",
+    "command": "npm install -g unrealcli && py -3.12 -m pip install --user unrealmcp"
   },
   "configure": {
     "actions": ["record-host-path", "project-mcp-json-entry", "manual-plugin-enable-guidance"]
   },
   "verify": {
-    "commands": ["uvx unrealmcp --help"],
-    "ports": [8765]
+    "commands": ["ue-cli --help", "unrealmcp --help"],
+    "ports": [55557]
   },
   "cacheArtifacts": [
     {
