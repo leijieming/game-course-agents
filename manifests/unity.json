@@ -1,0 +1,32 @@
+{
+  "id": "unity",
+  "name": "Unity MCP bridge",
+  "description": "Detects Unity Hub editor installations and prepares Unity MCP server guidance.",
+  "platforms": ["windows-native"],
+  "upstream": {
+    "url": "https://github.com/AnkleBreaker-Studio/unity-mcp-server"
+  },
+  "detect": {
+    "paths": ["%ProgramFiles%/Unity/Hub/Editor/*"],
+    "required": ["node", "npm"]
+  },
+  "install": {
+    "strategy": "detect-host-and-clone-adapter",
+    "command": "git clone https://github.com/AnkleBreaker-Studio/unity-mcp-server.git"
+  },
+  "configure": {
+    "actions": ["record-host-path", "project-mcp-json-entry", "manual-package-import-guidance"]
+  },
+  "verify": {
+    "commands": ["node --version", "npm --version"],
+    "ports": [8090]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "unity-mcp-server-repo",
+      "file": "repos/unity-mcp-server.zip",
+      "source": "https://github.com/AnkleBreaker-Studio/unity-mcp-server/archive/refs/heads/main.zip"
+    }
+  ],
+  "rollbackNotes": "Delete the workspace engine-bridges/unity folder and remove the Unity MCP entry from .mcp.json."
+}

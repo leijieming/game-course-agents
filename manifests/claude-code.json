@@ -1,0 +1,33 @@
+{
+  "id": "claude-code",
+  "name": "Claude Code",
+  "description": "Installs or verifies the Claude Code CLI used by the course.",
+  "platforms": ["windows-native", "wsl2"],
+  "upstream": {
+    "url": "https://docs.anthropic.com/en/docs/claude-code/setup",
+    "package": "@anthropic-ai/claude-code"
+  },
+  "detect": {
+    "commands": ["claude"],
+    "required": ["npm"]
+  },
+  "install": {
+    "strategy": "npm-global",
+    "command": "npm install -g @anthropic-ai/claude-code"
+  },
+  "configure": {
+    "actions": ["project-mcp-json", "optional-wsl-lane"]
+  },
+  "verify": {
+    "commands": ["claude --version", "claude doctor"],
+    "optionalCommands": ["claude mcp list"]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "npm-cache-claude-code",
+      "file": "npm/@anthropic-ai/claude-code.tgz",
+      "source": "npm pack @anthropic-ai/claude-code"
+    }
+  ],
+  "rollbackNotes": "Remove the global npm package with npm uninstall -g @anthropic-ai/claude-code if needed."
+}

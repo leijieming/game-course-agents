@@ -1,0 +1,34 @@
+{
+  "id": "blender",
+  "name": "Blender MCP bridge",
+  "description": "Detects Blender 4.x and prepares blender-mcp connection guidance.",
+  "platforms": ["windows-native"],
+  "upstream": {
+    "url": "https://github.com/ahujasid/blender-mcp",
+    "package": "blender-mcp"
+  },
+  "detect": {
+    "commands": ["blender"],
+    "paths": ["%ProgramFiles%/Blender Foundation/Blender*/blender.exe"],
+    "requiredMajor": 4
+  },
+  "install": {
+    "strategy": "detect-host-and-use-uvx",
+    "command": "uvx blender-mcp"
+  },
+  "configure": {
+    "actions": ["record-host-path", "project-mcp-json-entry", "manual-addon-enable-guidance"]
+  },
+  "verify": {
+    "commands": ["uvx blender-mcp --help"],
+    "ports": [9876]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "blender-mcp-python-package",
+      "file": "python/blender-mcp.whl",
+      "source": "uv pip download blender-mcp"
+    }
+  ],
+  "rollbackNotes": "Delete the workspace engine-bridges/blender folder and remove the Blender MCP entry from .mcp.json."
+}

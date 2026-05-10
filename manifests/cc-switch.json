@@ -1,0 +1,33 @@
+{
+  "id": "cc-switch",
+  "name": "CC Switch",
+  "description": "Installs or verifies CC Switch so students can switch Claude Code providers and MCP profiles.",
+  "platforms": ["windows-native"],
+  "upstream": {
+    "url": "https://github.com/farion1231/cc-switch"
+  },
+  "detect": {
+    "commands": ["ccswitch", "cc-switch"],
+    "paths": ["%LOCALAPPDATA%/Programs/CC Switch/CC Switch.exe", "%ProgramFiles%/CC Switch/CC Switch.exe"]
+  },
+  "install": {
+    "strategy": "github-release-windows-installer",
+    "releaseApi": "https://api.github.com/repos/farion1231/cc-switch/releases/latest",
+    "assetPattern": "Windows.msi"
+  },
+  "configure": {
+    "actions": ["secure-provider-prompt", "no-secret-logging", "local-provider-metadata"]
+  },
+  "verify": {
+    "commands": ["ccswitch --version"],
+    "optionalCommands": ["cc-switch --version"]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "cc-switch-release",
+      "file": "cc-switch/release.zip",
+      "source": "https://github.com/farion1231/cc-switch/releases"
+    }
+  ],
+  "rollbackNotes": "Remove CC Switch through its installer or npm global uninstall, depending on the selected install source."
+}

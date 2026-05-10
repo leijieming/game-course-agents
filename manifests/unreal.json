@@ -1,0 +1,33 @@
+{
+  "id": "unreal",
+  "name": "Unreal Engine 5 MCP bridge",
+  "description": "Detects UE5 and prepares a local record for UnrealMCP-based integration.",
+  "platforms": ["windows-native"],
+  "upstream": {
+    "url": "https://pypi.org/project/unrealmcp/",
+    "package": "unrealmcp"
+  },
+  "detect": {
+    "paths": ["%ProgramFiles%/Epic Games/UE_5*"],
+    "requiredMajor": 5
+  },
+  "install": {
+    "strategy": "detect-host-and-use-uvx",
+    "command": "uvx unrealmcp"
+  },
+  "configure": {
+    "actions": ["record-host-path", "project-mcp-json-entry", "manual-plugin-enable-guidance"]
+  },
+  "verify": {
+    "commands": ["uvx unrealmcp --help"],
+    "ports": [8765]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "unrealmcp-python-package",
+      "file": "python/unrealmcp.whl",
+      "source": "uv pip download unrealmcp"
+    }
+  ],
+  "rollbackNotes": "Delete the workspace engine-bridges/unreal folder and remove the Unreal MCP entry from .mcp.json."
+}

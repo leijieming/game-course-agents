@@ -1,0 +1,33 @@
+{
+  "id": "game-studios",
+  "name": "Claude Code Game Studios",
+  "description": "Copies the game studio agent template into a new or existing course workspace.",
+  "platforms": ["windows-native", "wsl2"],
+  "upstream": {
+    "url": "https://github.com/leijieming/Claude-Code-Game-Studios",
+    "branch": "main"
+  },
+  "detect": {
+    "paths": ["CLAUDE.md", ".claude"],
+    "required": ["git"]
+  },
+  "install": {
+    "strategy": "git-clone-depth-1",
+    "command": "git clone --depth 1 https://github.com/leijieming/Claude-Code-Game-Studios.git"
+  },
+  "configure": {
+    "actions": ["backup-conflicts", "copy-template", "write-project-mcp-json"]
+  },
+  "verify": {
+    "paths": ["CLAUDE.md", ".claude/agents", ".claude/skills"],
+    "commands": ["git -C _Claude-Code-Game-Studios status --short"]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "game-studios-repo",
+      "file": "repos/Claude-Code-Game-Studios.zip",
+      "source": "https://github.com/leijieming/Claude-Code-Game-Studios/archive/refs/heads/main.zip"
+    }
+  ],
+  "rollbackNotes": "Restore files from .backups in the workspace if template merging was not desired."
+}

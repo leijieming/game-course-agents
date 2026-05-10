@@ -1,0 +1,33 @@
+{
+  "id": "godot",
+  "name": "Godot 4 MCP bridge",
+  "description": "Detects Godot 4 and prepares MCP bridge guidance for course projects.",
+  "platforms": ["windows-native"],
+  "upstream": {
+    "url": "https://github.com/tugcantopaloglu/godot-mcp"
+  },
+  "detect": {
+    "commands": ["godot"],
+    "paths": ["%USERPROFILE%/Downloads/Godot*.exe", "%USERPROFILE%/Apps/Godot*.exe"],
+    "requiredMajor": 4
+  },
+  "install": {
+    "strategy": "detect-host-and-clone-adapter",
+    "command": "git clone https://github.com/tugcantopaloglu/godot-mcp.git"
+  },
+  "configure": {
+    "actions": ["record-host-path", "project-mcp-json-entry", "autoload-guidance"]
+  },
+  "verify": {
+    "commands": ["godot --version"],
+    "ports": [9080]
+  },
+  "cacheArtifacts": [
+    {
+      "id": "godot-mcp-repo",
+      "file": "repos/godot-mcp.zip",
+      "source": "https://github.com/tugcantopaloglu/godot-mcp/archive/refs/heads/main.zip"
+    }
+  ],
+  "rollbackNotes": "Delete the workspace engine-bridges/godot folder and remove the Godot MCP entry from .mcp.json."
+}

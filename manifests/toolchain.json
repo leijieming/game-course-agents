@@ -1,0 +1,23 @@
+{
+  "id": "toolchain",
+  "name": "Windows course toolchain",
+  "description": "Detects Git, Node.js, npm, Python, uv/uvx, and optional WSL2 support.",
+  "platforms": ["windows-native", "wsl2"],
+  "detect": {
+    "commands": ["git", "node", "npm", "python", "py", "uvx", "wsl"],
+    "required": ["git", "node", "npm"]
+  },
+  "install": {
+    "strategy": "detect-only-with-guidance",
+    "notes": "The installer reports missing tools and does not force package-manager choices."
+  },
+  "configure": {
+    "actions": ["create-workspace-directory", "record-health-report"]
+  },
+  "verify": {
+    "commands": ["git --version", "node --version", "npm --version"],
+    "optionalCommands": ["python --version", "uvx --version", "wsl --status"]
+  },
+  "cacheArtifacts": [],
+  "rollbackNotes": "No system files are changed by this module."
+}
