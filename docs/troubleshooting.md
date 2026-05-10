@@ -164,7 +164,7 @@ cd game-course-agents
 3. **UE 是否正确安装？**
    ```powershell
    # 检查 UE 安装位置
-   Test-Path "C:\Program Files\Epic Games\UE_5.7"
+   Test-Path "C:\Program Files\Epic Games\UE_5.5"
    ```
 
 ---

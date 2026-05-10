@@ -192,7 +192,7 @@ Get-Content "$HOME\GameCourseAI\.mcp.json"
 
 #### 前置条件
 
-- 已安装 Unreal Engine 5.7 或更高版本
+- 已安装 Unreal Engine 5.0 或更高版本
 - 有一个 UE 项目（`.uproject` 文件）
 
 #### 安装步骤
@@ -231,7 +231,7 @@ Get-Content "$HOME\GameCourseAI\.mcp.json"
 ```powershell
 .\scripts\install-unreal-mcp-bridge.ps1 `
   -UnrealProjectPath "D:\MyProject\MyProject.uproject" `
-  -EnginePath "F:\Program Files\Epic Games\UE_5.7"
+  -EnginePath "F:\Program Files\Epic Games\UE_5.5"
 ```
 
 ### Unity
