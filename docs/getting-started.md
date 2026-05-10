@@ -16,8 +16,8 @@
 ## 第一步：下载课程仓库
 
 ```powershell
-git clone https://github.com/leijieming/game-course-ai-agent.git
-cd game-course-ai-agent
+git clone https://github.com/leijieming/game-course-agents.git
+cd game-course-agents
 ```
 
 如果课堂还没有公开仓库，可以把本目录拷贝到学生电脑后直接进入目录运行。
@@ -82,12 +82,31 @@ claude
 
 ## 四个软件的连接策略
 
-- UE5：优先使用 UnrealMCP / `uvx unrealmcp`，UE 内插件启用后再让 Claude Code 连接。
+- UE5：安装器会安装 `unrealcli` 和 Python 包 `unrealmcp`，并把 Claude Code 配置为 stdio MCP server。UE 内 UnrealMCP Bridge 启用并运行后再让 Claude Code 连接。
 - Unity：优先使用 `AnkleBreaker-Studio/unity-mcp-server`，Unity 侧导入插件包。
 - Godot 4：优先使用 `tugcantopaloglu/godot-mcp`，项目侧启用 autoload 或插件。
 - Blender 4.x：优先使用 `ahujasid/blender-mcp`，Blender 侧启用 addon，Claude Code 侧用 `uvx blender-mcp`。
 
 具体插件安装步骤以对应上游项目 README 为准；本仓库负责把课程路径、MCP 配置和健康检查串起来。
+
+### UE 5.7 验证
+
+安装器会优先从 Epic Launcher 安装清单检测 UE5，因此支持 `F:\Program Files\Epic Games\UE_5.7` 这类非 C 盘安装路径。
+
+只配置 Unreal 相关工具可以运行：
+
+```powershell
+.\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -Modules toolchain,game-studios,unreal
+```
+
+安装完成后可以检查：
+
+```powershell
+Get-Content "$HOME\GameCourseAI\.mcp.json"
+ue-cli doctor
+```
+
+如果 `ue-cli doctor` 提示没有 `.uproject` 或无法连接 `127.0.0.1:55557`，说明当前还没有打开具体 UE 项目，或 UE 编辑器内的 UnrealMCP Bridge 没有启动。
 
 ## CC Switch 安装说明
 
