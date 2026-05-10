@@ -47,7 +47,14 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          Invoke-ScriptAnalyzer -Path ./install.ps1, ./scripts/prepare-offline-cache.ps1, ./scripts/install-unreal-mcp-bridge.ps1 -Recurse -Severity Error
+          $files = @(
+            "./install.ps1",
+            "./scripts/prepare-offline-cache.ps1",
+            "./scripts/install-unreal-mcp-bridge.ps1"
+          )
+          foreach ($file in $files) {
+            Invoke-ScriptAnalyzer -Path $file -Recurse -Severity Error
+          }
 
       - name: Validate installer dry-run
         shell: pwsh
