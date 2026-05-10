@@ -365,6 +365,13 @@ function Install-GameStudiosTemplate {
 
   if (-not (Test-Path $templatePath)) {
     if (Test-CommandAvailable -Name "git") {
+      if ($DryRun) {
+        Invoke-LoggedCommand -Module $module -Command "git" -Arguments @("clone", "--depth", "1", $repo, $templatePath)
+        Write-Step -Status "SKIP" -Module $module -Message "Dry-run template clone skipped." -Data @{ path = $templatePath }
+        Configure-ClaudeMcp -TargetPath $TargetPath
+        Write-Step -Status "SKIP" -Module $module -Message "Dry-run Game Studios template configuration skipped." -Data @{ target = $TargetPath; mode = $GameStudiosMode }
+        return
+      }
       Invoke-LoggedCommand -Module $module -Command "git" -Arguments @("clone", "--depth", "1", $repo, $templatePath)
       Write-Step -Status "PASS" -Module $module -Message "Game Studios template cloned." -Data @{ path = $templatePath }
     } else {
