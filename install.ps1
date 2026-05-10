@@ -486,6 +486,15 @@ function Install-GameStudiosTemplate {
   Ensure-Directory -Path $TargetPath
   $repo = "https://github.com/leijieming/Claude-Code-Game-Studios.git"
   $templatePath = Join-Path $WorkspacePath "_Claude-Code-Game-Studios"
+  $existingClaudeMcpServers = $null
+  $targetClaudeSettings = Join-Path $TargetPath ".claude\settings.json"
+  if (Test-Path $targetClaudeSettings) {
+    try {
+      $existingClaudeMcpServers = (Get-Content -Raw -Path $targetClaudeSettings | ConvertFrom-Json).mcpServers
+    } catch {
+      $existingClaudeMcpServers = $null
+    }
+  }
 
   if (-not (Test-Path $templatePath)) {
     if (Test-CommandAvailable -Name "git") {
@@ -520,7 +529,24 @@ function Install-GameStudiosTemplate {
       Write-Step -Status "SKIP" -Module $module -Message "Dry-run template copy skipped." -Data @{ item = $item }
       continue
     }
-    Copy-Item -Recurse -Force -Path $source -Destination $target
+    if ((Get-Item $source).PSIsContainer -and (Test-Path $target)) {
+      Copy-Item -Recurse -Force -Path (Join-Path $source "*") -Destination $target
+    } else {
+      Copy-Item -Recurse -Force -Path $source -Destination $target
+    }
+  }
+
+  if (-not $DryRun -and $existingClaudeMcpServers -and (Test-Path $targetClaudeSettings)) {
+    $settings = Get-Content -Raw -Path $targetClaudeSettings | ConvertFrom-Json
+    if (-not $settings.mcpServers) {
+      $settings | Add-Member -NotePropertyName "mcpServers" -NotePropertyValue ([pscustomobject]@{}) -Force
+    }
+    foreach ($server in $existingClaudeMcpServers.PSObject.Properties) {
+      $settings.mcpServers | Add-Member -NotePropertyName $server.Name -NotePropertyValue $server.Value -Force
+    }
+    $encoding = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($targetClaudeSettings, ($settings | ConvertTo-Json -Depth 30), $encoding)
+    Write-Step -Status "PASS" -Module $module -Message "Existing Claude MCP settings preserved." -Data @{ path = $targetClaudeSettings }
   }
 
   Configure-ClaudeMcp -TargetPath $TargetPath
