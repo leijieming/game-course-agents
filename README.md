@@ -43,9 +43,9 @@ Get-Content "$HOME\GameCourseAI\health-report.json"
 `unreal` 模块会：
 
 - 从 Epic Launcher 安装清单和常见安装目录检测 UE5，支持安装在非 C 盘的 `UE_5.x`。
-- 安装 `unrealcli`，用于和 UE 编辑器内的 UnrealMCP Bridge 通信。
-- 安装 Python 包 `unrealmcp`，并把 Claude Code 的项目级 `.mcp.json` 配置为 stdio MCP server。
-- 默认使用 `127.0.0.1:55557` 作为 UnrealMCP Bridge 连接地址。
+- 使用 `ChiR24/Unreal_mcp` 的 `McpAutomationBridge` 插件作为 UE 侧服务。
+- 把 Claude Code 的项目级 `.mcp.json` 配置为 HTTP MCP server。
+- 默认连接 `http://localhost:3000/mcp`。
 
 只配置 UE MCP 相关内容可以运行：
 
@@ -53,7 +53,13 @@ Get-Content "$HOME\GameCourseAI\health-report.json"
 .\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -Modules toolchain,game-studios,unreal
 ```
 
-安装完成后，`$HOME\GameCourseAI\.mcp.json` 会包含 `unreal` MCP server。要完成真实连接，还需要打开一个 `.uproject`，在 UE 5.7 编辑器里启用 UnrealMCP Bridge，并保持编辑器运行；否则 `ue-cli doctor` 会提示没有项目或无法连接 `127.0.0.1:55557`。
+安装完成后，`$HOME\GameCourseAI\.mcp.json` 会包含 `unreal-engine` MCP server。要把 UE 插件安装到某个项目，可以先打开 `.uproject`，然后运行：
+
+```powershell
+.\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
+```
+
+脚本会优先检测当前正在运行的 Unreal Editor 项目，构建并安装 `McpAutomationBridge`，写入项目 `Config/DefaultGame.ini`，并生成项目级 `.mcp.json`。完成后必须重启 UE 编辑器，看到右下角 `MCP :3000` 后再启动 Claude Code。
 
 ## 仓库结构
 
@@ -82,7 +88,7 @@ tests/                      Node.js 静态契约测试
 .\install.ps1 -Modules toolchain,claude-code,cc-switch,game-studios
 ```
 
-只配置 Claude Code、Game Studios 和 Unreal MCP：
+只配置 Claude Code、Game Studios 和 Unreal MCP 客户端入口：
 
 ```powershell
 .\install.ps1 -Modules toolchain,claude-code,game-studios,unreal
@@ -105,7 +111,7 @@ tests/                      Node.js 静态契约测试
 - Claude Code: https://docs.anthropic.com/en/docs/claude-code/setup
 - CC Switch: https://github.com/farion1231/cc-switch ，Windows 版优先使用 Releases 中的 MSI/Portable 包。
 - Claude-Code-Game-Studios: https://github.com/leijieming/Claude-Code-Game-Studios
-- UnrealMCP: https://pypi.org/project/unrealmcp/
+- Unreal MCP Automation Bridge: https://github.com/ChiR24/Unreal_mcp
 - Unity MCP Server: https://github.com/AnkleBreaker-Studio/unity-mcp-server
 - Godot MCP: https://github.com/tugcantopaloglu/godot-mcp
 - Blender MCP: https://github.com/ahujasid/blender-mcp

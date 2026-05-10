@@ -1,12 +1,8 @@
 {
   "mcpServers": {
-    "unreal": {
-      "type": "stdio",
-      "command": "unrealmcp",
-      "env": {
-        "UNREAL_MCP_HOST": "127.0.0.1",
-        "UNREAL_MCP_PORT": "55557"
-      }
+    "unreal-engine": {
+      "type": "url",
+      "url": "http://localhost:3000/mcp"
     },
     "unity": {
       "command": "node",

@@ -370,63 +370,35 @@ function Install-PythonUserPackage {
 
 function Install-UnrealMcpTools {
   $module = "unreal"
-
-  if (Test-CommandAvailable -Name "npm") {
-    if (-not (Test-CommandAvailable -Name "ue-cli")) {
-      Invoke-LoggedCommand -Module $module -Command "npm" -Arguments @("install", "-g", "unrealcli")
-      Write-Step -Status "PASS" -Module $module -Message "Unreal CLI install command completed."
-    } else {
-      Write-Step -Status "PASS" -Module $module -Message "Unreal CLI is already available."
-    }
-  } else {
-    Write-Step -Status "WARN" -Module $module -Message "npm is missing; Unreal CLI install skipped."
-  }
-
-  if (-not (Test-CommandAvailable -Name "unrealmcp")) {
-    Install-PythonUserPackage -Module $module -Package "unrealmcp"
-  } else {
-    Write-Step -Status "PASS" -Module $module -Message "Unreal MCP Python command is already available."
-  }
+  Write-Step -Status "PASS" -Module $module -Message "Unreal MCP uses ChiR24/Unreal_mcp native HTTP. Run scripts/install-unreal-mcp-bridge.ps1 for project plugin installation."
 }
 
 function Configure-UnrealMcp {
   $target = Join-Path $WorkspacePath ".mcp.json"
   if (-not (Test-Path $target)) {
-    return
+    $config = [pscustomobject]@{ mcpServers = [pscustomobject]@{} }
+  } else {
+    $config = Get-Content -Raw -Path $target | ConvertFrom-Json
+    if (-not $config.mcpServers) {
+      $config | Add-Member -NotePropertyName "mcpServers" -NotePropertyValue ([pscustomobject]@{}) -Force
+    }
   }
 
-  $config = Get-Content -Raw -Path $target | ConvertFrom-Json
-  if (-not $config.mcpServers.unreal) {
-    return
+  if ($config.mcpServers.unreal) {
+    $config.mcpServers.PSObject.Properties.Remove("unreal")
   }
-
-  $pythonScripts = Join-Path $env:APPDATA "Python\Python312\Scripts"
-  if ((Test-Path $pythonScripts) -and ($env:Path -notlike "*$pythonScripts*")) {
-    $env:Path = "$pythonScripts;$env:Path"
-  }
-
-  $command = Resolve-NativeCommand -Name "unrealmcp"
-  if (-not $command) {
-    $command = "unrealmcp"
-  }
-
-  $server = $config.mcpServers.unreal
-  $server.PSObject.Properties.Remove("args")
-  $server | Add-Member -NotePropertyName "type" -NotePropertyValue "stdio" -Force
-  $server.command = $command
-  if (-not $server.env) {
-    $server | Add-Member -NotePropertyName "env" -NotePropertyValue ([pscustomobject]@{}) -Force
-  }
-  $server.env | Add-Member -NotePropertyName "UNREAL_MCP_HOST" -NotePropertyValue "127.0.0.1" -Force
-  $server.env | Add-Member -NotePropertyName "UNREAL_MCP_PORT" -NotePropertyValue "55557" -Force
+  $config.mcpServers | Add-Member -NotePropertyName "unreal-engine" -NotePropertyValue ([pscustomobject]@{
+    type = "url"
+    url = "http://localhost:3000/mcp"
+  }) -Force
 
   if ($DryRun) {
-    Write-Step -Status "SKIP" -Module "unreal" -Message "Dry-run Unreal MCP config update skipped." -Data @{ command = $command }
+    Write-Step -Status "SKIP" -Module "unreal" -Message "Dry-run Unreal MCP HTTP config update skipped." -Data @{ url = "http://localhost:3000/mcp" }
     return
   }
 
   $config | ConvertTo-Json -Depth 8 | Set-Content -Path $target -Encoding UTF8
-  Write-Step -Status "PASS" -Module "unreal" -Message "Claude Code Unreal MCP entry updated." -Data @{ target = $target; command = $command }
+  Write-Step -Status "PASS" -Module "unreal" -Message "Claude Code Unreal HTTP MCP entry updated." -Data @{ target = $target; url = "http://localhost:3000/mcp" }
 }
 
 function Find-CcSwitchApp {

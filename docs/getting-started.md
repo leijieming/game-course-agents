@@ -82,7 +82,7 @@ claude
 
 ## 四个软件的连接策略
 
-- UE5：安装器会安装 `unrealcli` 和 Python 包 `unrealmcp`，并把 Claude Code 配置为 stdio MCP server。UE 内 UnrealMCP Bridge 启用并运行后再让 Claude Code 连接。
+- UE5：使用 `ChiR24/Unreal_mcp` 的 `McpAutomationBridge` UE 插件。插件启用 Native MCP 后，Claude Code 通过 `http://localhost:3000/mcp` 直接连接。
 - Unity：优先使用 `AnkleBreaker-Studio/unity-mcp-server`，Unity 侧导入插件包。
 - Godot 4：优先使用 `tugcantopaloglu/godot-mcp`，项目侧启用 autoload 或插件。
 - Blender 4.x：优先使用 `ahujasid/blender-mcp`，Blender 侧启用 addon，Claude Code 侧用 `uvx blender-mcp`。
@@ -93,20 +93,28 @@ claude
 
 安装器会优先从 Epic Launcher 安装清单检测 UE5，因此支持 `F:\Program Files\Epic Games\UE_5.7` 这类非 C 盘安装路径。
 
-只配置 Unreal 相关工具可以运行：
+只配置 Unreal MCP 客户端入口可以运行：
 
 ```powershell
 .\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -Modules toolchain,game-studios,unreal
 ```
 
-安装完成后可以检查：
+把 UE 插件安装到当前打开的项目：
+
+```powershell
+.\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
+```
+
+脚本会检测正在运行的 Unreal Editor 进程，找到 `.uproject` 和 UE 安装目录，构建并复制 `McpAutomationBridge` 到项目 `Plugins/`，启用 Native MCP，并写入项目级 `.mcp.json`。
+
+安装完成后重启 UE 编辑器，并检查：
 
 ```powershell
 Get-Content "$HOME\GameCourseAI\.mcp.json"
-ue-cli doctor
+Invoke-WebRequest http://localhost:3000/mcp
 ```
 
-如果 `ue-cli doctor` 提示没有 `.uproject` 或无法连接 `127.0.0.1:55557`，说明当前还没有打开具体 UE 项目，或 UE 编辑器内的 UnrealMCP Bridge 没有启动。
+如果浏览器或命令行访问 `http://localhost:3000/mcp` 没有响应，通常是 UE 编辑器还没重启、项目没有启用 `McpAutomationBridge`，或 Native MCP 没有在 Project Settings 中打开。
 
 ## CC Switch 安装说明
 

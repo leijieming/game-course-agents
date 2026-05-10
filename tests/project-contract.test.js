@@ -21,6 +21,7 @@ test("repository exposes the planned course entrypoints", () => {
     "docs/troubleshooting.md",
     "examples/mcp/claude-code.mcp.json",
     "scripts/prepare-offline-cache.ps1",
+    "scripts/install-unreal-mcp-bridge.ps1",
     ".github/workflows/ci.yml",
   ]) {
     assert.equal(existsSync(join(root, path)), true, `${path} should exist`);
@@ -95,7 +96,9 @@ test("CC Switch installation uses Windows releases instead of npm package guessw
 
 test("Claude Code MCP example includes all four engine integrations", () => {
   const config = readJson("examples/mcp/claude-code.mcp.json");
-  assert.deepEqual(Object.keys(config.mcpServers).sort(), ["blender", "godot", "unity", "unreal"]);
+  assert.deepEqual(Object.keys(config.mcpServers).sort(), ["blender", "godot", "unity", "unreal-engine"]);
+  assert.equal(config.mcpServers["unreal-engine"].type, "url");
+  assert.equal(config.mcpServers["unreal-engine"].url, "http://localhost:3000/mcp");
 });
 
 test("offline cache helper reads manifests and avoids secret material", () => {

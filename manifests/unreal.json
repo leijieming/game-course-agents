@@ -1,33 +1,33 @@
 {
   "id": "unreal",
   "name": "Unreal Engine 5 MCP bridge",
-  "description": "Detects UE5 and prepares a local record for UnrealMCP-based integration.",
+  "description": "Detects UE5 and prepares ChiR24/Unreal_mcp's native MCP bridge for Claude Code.",
   "platforms": ["windows-native"],
   "upstream": {
-    "url": "https://pypi.org/project/unrealmcp/",
-    "package": "unrealmcp"
+    "url": "https://github.com/ChiR24/Unreal_mcp",
+    "package": "McpAutomationBridge"
   },
   "detect": {
     "paths": ["%ProgramFiles%/Epic Games/UE_5*"],
     "requiredMajor": 5
   },
   "install": {
-    "strategy": "detect-host-install-cli-and-python-mcp",
-    "command": "npm install -g unrealcli && py -3.12 -m pip install --user unrealmcp"
+    "strategy": "build-and-install-project-plugin",
+    "command": "scripts/install-unreal-mcp-bridge.ps1 -UnrealProjectPath <path-to-uproject>"
   },
   "configure": {
-    "actions": ["record-host-path", "project-mcp-json-entry", "manual-plugin-enable-guidance"]
+    "actions": ["record-host-path", "install-mcp-automation-bridge", "enable-native-mcp", "project-mcp-json-entry"]
   },
   "verify": {
-    "commands": ["ue-cli --help", "unrealmcp --help"],
-    "ports": [55557]
+    "commands": ["Invoke-WebRequest http://localhost:3000/mcp"],
+    "ports": [3000]
   },
   "cacheArtifacts": [
     {
-      "id": "unrealmcp-python-package",
-      "file": "python/unrealmcp.whl",
-      "source": "uv pip download unrealmcp"
+      "id": "unreal-mcp-source",
+      "file": "git/Unreal_mcp",
+      "source": "git clone https://github.com/ChiR24/Unreal_mcp.git"
     }
   ],
-  "rollbackNotes": "Delete the workspace engine-bridges/unreal folder and remove the Unreal MCP entry from .mcp.json."
+  "rollbackNotes": "Disable McpAutomationBridge in the .uproject, delete the project Plugins/McpAutomationBridge folder, remove the unreal-engine MCP entry from .mcp.json, and restart Unreal Editor."
 }
