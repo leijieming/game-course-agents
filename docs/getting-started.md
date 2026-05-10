@@ -105,12 +105,13 @@ claude
 .\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
 ```
 
-脚本会检测正在运行的 Unreal Editor 进程，找到 `.uproject` 和 UE 安装目录，构建并复制 `McpAutomationBridge` 到项目 `Plugins/`，启用 Native MCP，并写入项目级 `.mcp.json`。
+脚本会检测正在运行的 Unreal Editor 进程，找到 `.uproject` 和 UE 安装目录，构建并复制 `McpAutomationBridge` 到项目 `Plugins/`，启用 Native MCP，并写入项目级 `.claude/settings.json` 和 `.mcp.json`。
 
 安装完成后重启 UE 编辑器，并检查：
 
 ```powershell
 Get-Content "$HOME\GameCourseAI\.mcp.json"
+Get-Content ".\.claude\settings.json"
 Invoke-WebRequest http://localhost:3000/mcp
 ```
 

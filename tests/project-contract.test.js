@@ -97,7 +97,7 @@ test("CC Switch installation uses Windows releases instead of npm package guessw
 test("Claude Code MCP example includes all four engine integrations", () => {
   const config = readJson("examples/mcp/claude-code.mcp.json");
   assert.deepEqual(Object.keys(config.mcpServers).sort(), ["blender", "godot", "unity", "unreal-engine"]);
-  assert.equal(config.mcpServers["unreal-engine"].type, "url");
+  assert.equal(config.mcpServers["unreal-engine"].type, "http");
   assert.equal(config.mcpServers["unreal-engine"].url, "http://localhost:3000/mcp");
 });
 

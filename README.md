@@ -59,7 +59,7 @@ Get-Content "$HOME\GameCourseAI\health-report.json"
 .\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
 ```
 
-脚本会优先检测当前正在运行的 Unreal Editor 项目，构建并安装 `McpAutomationBridge`，写入项目 `Config/DefaultGame.ini`，并生成项目级 `.mcp.json`。完成后必须重启 UE 编辑器，看到右下角 `MCP :3000` 后再启动 Claude Code。
+脚本会优先检测当前正在运行的 Unreal Editor 项目，构建并安装 `McpAutomationBridge`，写入项目 `Config/DefaultGame.ini`，并生成项目级 `.claude/settings.json` 和 `.mcp.json`。完成后必须重启 UE 编辑器，看到右下角 `MCP :3000` 后，在 UE 项目目录运行 `claude`。
 
 ## 仓库结构
 

@@ -271,7 +271,7 @@ function Write-McpJson {
   }
 
   $json.mcpServers | Add-Member -NotePropertyName "unreal-engine" -NotePropertyValue ([pscustomobject]@{
-    type = "url"
+    type = "http"
     url = "http://localhost:3000/mcp"
   }) -Force
 
@@ -286,6 +286,34 @@ function Write-McpJson {
   Write-Step -Status "PASS" -Message "MCP client config written: $Path"
 }
 
+function Write-ClaudeSettings {
+  param([Parameter(Mandatory)][string]$Path)
+
+  $settings = [pscustomobject]@{ mcpServers = [pscustomobject]@{} }
+  if (Test-Path $Path) {
+    $settings = Get-Content -Raw -Path $Path | ConvertFrom-Json
+    if (-not $settings.mcpServers) {
+      $settings | Add-Member -NotePropertyName "mcpServers" -NotePropertyValue ([pscustomobject]@{}) -Force
+    }
+  }
+
+  $settings.mcpServers | Add-Member -NotePropertyName "unreal-engine" -NotePropertyValue ([pscustomobject]@{
+    type = "http"
+    url = "http://localhost:3000/mcp"
+  }) -Force
+
+  if ($DryRun) {
+    Write-Step -Status "SKIP" -Message "Dry-run Claude settings update skipped: $Path"
+    return
+  }
+
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Path) | Out-Null
+  $text = $settings | ConvertTo-Json -Depth 10
+  $encoding = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, $text, $encoding)
+  Write-Step -Status "PASS" -Message "Claude project settings written: $Path"
+}
+
 Resolve-UnrealContext
 Ensure-UnrealMcpSource
 Build-McpAutomationBridge
@@ -295,7 +323,8 @@ Enable-NativeMcpConfig
 
 $projectRoot = Split-Path -Parent $UnrealProjectPath
 Write-McpJson -Path (Join-Path $projectRoot ".mcp.json")
+Write-ClaudeSettings -Path (Join-Path $projectRoot ".claude\settings.json")
 New-Item -ItemType Directory -Force -Path $WorkspacePath | Out-Null
 Write-McpJson -Path (Join-Path $WorkspacePath ".mcp.json")
 
-Write-Step -Status "NEXT" -Message "Restart Unreal Editor, then verify http://localhost:3000/mcp is listening."
+Write-Step -Status "NEXT" -Message "Restart Unreal Editor, cd into the Unreal project, then run claude."

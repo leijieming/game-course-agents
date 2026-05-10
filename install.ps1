@@ -388,7 +388,7 @@ function Configure-UnrealMcp {
     $config.mcpServers.PSObject.Properties.Remove("unreal")
   }
   $config.mcpServers | Add-Member -NotePropertyName "unreal-engine" -NotePropertyValue ([pscustomobject]@{
-    type = "url"
+    type = "http"
     url = "http://localhost:3000/mcp"
   }) -Force
 
