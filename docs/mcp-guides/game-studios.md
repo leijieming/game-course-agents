@@ -1,8 +1,8 @@
-# Claude Code Game Studios 使用指南
+# AI Game Class Studios 使用指南
 
 ## 简介
 
-Claude Code Game Studios 是一个游戏开发 AI 代理框架，包含 48 个专业 AI 代理，覆盖游戏开发全流程。
+AI Game Class Studios 是一个游戏开发 AI 代理框架，包含 48 个专业 AI 代理，覆盖游戏开发全流程。
 
 ## 核心功能
 
