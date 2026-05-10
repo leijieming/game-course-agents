@@ -21,7 +21,7 @@ Unreal MCP 让 Claude Code 能够直接与 Unreal Engine 5 交互，实现自动
 
 ### 1. 安装前提条件
 
-- Unreal Engine 5.7 或更高版本
+- Unreal Engine 5.0 或更高版本
 - Python 3.12（UE 内置或系统安装）
 - Claude Code 已安装
 
