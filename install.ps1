@@ -384,7 +384,7 @@ function Configure-UnrealMcp {
     }
   }
 
-  if ($config.mcpServers.unreal) {
+  if ($config.mcpServers.PSObject.Properties.Match("unreal")) {
     $config.mcpServers.PSObject.Properties.Remove("unreal")
   }
   $config.mcpServers | Add-Member -NotePropertyName "unreal-engine" -NotePropertyValue ([pscustomobject]@{
