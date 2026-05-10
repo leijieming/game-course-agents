@@ -179,7 +179,16 @@ cd game-course-agents
 
 ### Unity / Godot / Blender
 
-这些引擎的连接需要额外安装对应插件，详见 [docs/getting-started.md](docs/getting-started.md)。
+这些引擎的连接需要额外安装对应插件，详见以下文档：
+
+| 引擎 | 文档 | 功能 |
+|------|------|------|
+| **Unreal Engine 5** | [unreal-mcp.md](docs/mcp-guides/unreal-mcp.md) | 蓝图操作、资产创建、关卡编辑 |
+| **Unity** | [unity-mcp.md](docs/mcp-guides/unity-mcp.md) | 游戏对象操作、组件管理、脚本生成 |
+| **Godot 4** | [godot-mcp.md](docs/mcp-guides/godot-mcp.md) | 场景操作、GDScript 生成 |
+| **Blender** | [blender-mcp.md](docs/mcp-guides/blender-mcp.md) | 3D 建模、材质设置、渲染控制 |
+
+**Claude Code Game Studios** 的完整使用说明见 [game-studios.md](docs/mcp-guides/game-studios.md)。
 
 ---
 
