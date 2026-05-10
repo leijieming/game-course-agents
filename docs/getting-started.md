@@ -1,126 +1,275 @@
-# 课堂安装说明
+# 课堂安装详细指南
 
-## 课前准备
+> 本文档提供更详细的安装说明，适合教师课前准备和学生自学。
 
-学生电脑建议准备：
+---
 
-- Windows 10/11
-- PowerShell 5.1 或 PowerShell 7
-- Git
-- Node.js LTS
-- 可选：Python 3、uv、WSL2
-- 至少安装一个课程使用的软件：UE5、Unity、Godot 4、Blender 4.x
+## 目录
 
-安装器不会自动安装 UE、Unity、Godot 或 Blender。本项目只负责 Claude Code、CC Switch、Game Studios 模板和 MCP 连接层。
+1. [课前准备检查清单](#课前准备检查清单)
+2. [软件安装详解](#软件安装详解)
+3. [安装器参数说明](#安装器参数说明)
+4. [安装后验证](#安装后验证)
+5. [各引擎连接配置](#各引擎连接配置)
 
-## 第一步：下载课程仓库
+---
 
-```powershell
-git clone https://github.com/leijieming/game-course-agents.git
-cd game-course-agents
-```
+## 课前准备检查清单
 
-如果课堂还没有公开仓库，可以把本目录拷贝到学生电脑后直接进入目录运行。
+### 教师课前准备
 
-## 第二步：先做 dry-run
+- [ ] 确认机房电脑满足最低配置要求
+- [ ] 提前下载必要的安装包（网络不稳定时）
+- [ ] 准备 API 密钥（如需要）
+- [ ] 测试安装流程
 
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-.\install.ps1 -DryRun -IncludeWsl
-```
+### 学生电脑最低要求
 
-dry-run 只显示将要执行的动作，不会复制模板、写配置或安装包。
+| 项目 | 最低要求 | 推荐配置 |
+|------|----------|----------|
+| 操作系统 | Windows 10 | Windows 11 |
+| 内存 | 8 GB | 16 GB 或更多 |
+| 硬盘空间 | 10 GB 可用空间 | 50 GB 以上（含游戏引擎） |
+| 网络 | 能访问 GitHub 和 npm | 稳定的宽带连接 |
 
-## 第三步：正式安装
+### 必装软件检查
 
-```powershell
-.\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -IncludeWsl -ConfigureApi
-```
-
-`-ConfigureApi` 会交互式询问 provider 名称、base URL 和 API Key。脚本使用 `Read-Host -AsSecureString` 获取密钥，不把密钥输出到终端或健康报告。
-
-## 第四步：打开 Claude Code
+打开 PowerShell，逐条运行以下命令检查：
 
 ```powershell
-cd "$HOME\GameCourseAI"
-claude
+# 检查 Git
+git --version
+# 应显示类似：git version 2.x.x
+
+# 检查 Node.js
+node --version
+# 应显示类似：v20.x.x 或更高
+
+# 检查 npm
+npm --version
+# 应显示类似：10.x.x 或更高
 ```
 
-进入后先运行：
+如果某个命令显示"无法识别"，说明该软件未安装。
 
-```text
-/start
-```
+---
 
-然后按课程目标选择游戏设计阶段、引擎和 review 强度。
+## 软件安装详解
 
-## 原生 Windows 与 WSL2 的分工
+### Git 安装
 
-- 原生 Windows：检测 UE/Unity/Godot/Blender，安装或启用桌面软件内插件，启动 MCP bridge。
-- WSL2：适合运行 Linux 命令行工具、Git、Node、Python、Claude Code。
-- 课程建议：学生主要在原生 Windows 使用桌面软件；需要 Linux 工具链时再打开 WSL2。
+1. 访问 https://git-scm.com/download/win
+2. 点击 **Click here to download** 自动下载
+3. 运行下载的安装程序
+4. 安装选项说明：
+   - **安装位置**：默认即可
+   - **选择组件**：默认即可
+   - **默认编辑器**：选择你熟悉的编辑器，或保持默认
+   - **PATH 环境**：选择 **Git from the command line and also from 3rd-party software**
+   - 后续选项保持默认，点击 **Install**
 
-## 离线缓存模式
+### Node.js 安装
 
-如果机房网络不稳定，教师可以提前准备：
+1. 访问 https://nodejs.org/
+2. 点击 **20.x.x LTS** 按钮（长期支持版本）
+3. 运行下载的安装程序
+4. 安装选项说明：
+   - 勾选 **Automatically install the necessary tools**（自动安装必要工具）
+   - 其他选项保持默认
+   - 点击 **Install**
+
+安装完成后，**关闭并重新打开 PowerShell**，使环境变量生效。
+
+### Python 安装（可选）
+
+1. 访问 https://www.python.org/downloads/
+2. 下载 Python 3.12.x 版本
+3. 运行安装程序
+4. **重要**：勾选 **Add Python to PATH**
+5. 点击 **Install Now**
+
+---
+
+## 安装器参数说明
+
+### 基本用法
 
 ```powershell
-.\install.ps1 -OfflineCache "D:\game-course-cache"
+.\install.ps1
 ```
 
-当前 V1 会校验缓存文件是否存在和校验和是否匹配；具体缓存文件见 `manifests/*.json` 的 `cacheArtifacts`。
+使用默认设置安装所有模块。
 
-## 合并到已有项目
+### 常用参数
 
-默认安装器把 Game Studios 模板复制到新的课程工作区。要合并到已有项目：
+| 参数 | 说明 | 示例 |
+|------|------|------|
+| `-WorkspacePath` | 指定安装位置 | `-WorkspacePath "D:\MyWorkspace"` |
+| `-DryRun` | 预览模式，不实际安装 | `-DryRun` |
+| `-ConfigureApi` | 配置 API 密钥 | `-ConfigureApi` |
+| `-IncludeWsl` | 启用 WSL2 支持 | `-IncludeWsl` |
+| `-Modules` | 只安装指定模块 | `-Modules claude-code,game-studios` |
+| `-OfflineCache` | 使用离线缓存 | `-OfflineCache "D:\cache"` |
+| `-SkipMcpConfig` | 跳过 MCP 配置 | `-SkipMcpConfig` |
+
+### 使用示例
+
+**预览安装内容：**
+```powershell
+.\install.ps1 -DryRun
+```
+
+**安装到自定义位置：**
+```powershell
+.\install.ps1 -WorkspacePath "D:\GameCourse"
+```
+
+**只安装核心工具：**
+```powershell
+.\install.ps1 -Modules toolchain,claude-code,game-studios
+```
+
+**配置 API 并安装：**
+```powershell
+.\install.ps1 -ConfigureApi
+```
+
+**使用离线缓存（机房网络不稳定时）：**
+```powershell
+.\install.ps1 -OfflineCache "D:\offline-cache"
+```
+
+---
+
+## 安装后验证
+
+### 自动验证
+
+安装完成后，查看健康报告：
 
 ```powershell
-.\install.ps1 -WorkspacePath "D:\MyGameProject" -GameStudiosMode merge
+Get-Content "$HOME\GameCourseAI\health-report.json"
 ```
 
-如果目标目录已有 `CLAUDE.md`、`.claude`、`docs` 等路径，安装器会先复制到 `.backups`，再写入模板内容。
+所有模块应显示 `"status": "PASS"` 或 `"status": "SKIP"`（SKIP 表示该软件未安装，属正常情况）。
 
-## 四个软件的连接策略
+### 手动验证
 
-- UE5：使用 `ChiR24/Unreal_mcp` 的 `McpAutomationBridge` UE 插件。插件启用 Native MCP 后，Claude Code 通过 `http://localhost:3000/mcp` 直接连接。
-- Unity：优先使用 `AnkleBreaker-Studio/unity-mcp-server`，Unity 侧导入插件包。
-- Godot 4：优先使用 `tugcantopaloglu/godot-mcp`，项目侧启用 autoload 或插件。
-- Blender 4.x：优先使用 `ahujasid/blender-mcp`，Blender 侧启用 addon，Claude Code 侧用 `uvx blender-mcp`。
-
-具体插件安装步骤以对应上游项目 README 为准；本仓库负责把课程路径、MCP 配置和健康检查串起来。
-
-### UE 5.7 验证
-
-安装器会优先从 Epic Launcher 安装清单检测 UE5，因此支持 `F:\Program Files\Epic Games\UE_5.7` 这类非 C 盘安装路径。
-
-只配置 Unreal MCP 客户端入口可以运行：
-
+**验证 Claude Code：**
 ```powershell
-.\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -Modules toolchain,game-studios,unreal
+claude --version
+# 应显示版本号，如：2.1.138
+
+claude doctor
+# 运行诊断检查
 ```
 
-把 UE 插件安装到当前打开的项目：
-
+**验证 CC Switch：**
 ```powershell
-.\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
+# 检查程序是否存在
+Test-Path "$env:LOCALAPPDATA\Programs\CC Switch\cc-switch.exe"
+# 应返回 True
 ```
 
-脚本会检测正在运行的 Unreal Editor 进程，找到 `.uproject` 和 UE 安装目录，构建并复制 `McpAutomationBridge` 到项目 `Plugins/`，启用 Native MCP，并写入项目级 `.claude/settings.json` 和 `.mcp.json`。
+**验证 Game Studios 模板：**
+```powershell
+Test-Path "$HOME\GameCourseAI\CLAUDE.md"
+Test-Path "$HOME\GameCourseAI\.claude"
+# 都应返回 True
+```
 
-安装完成后重启 UE 编辑器，并检查：
-
+**验证 MCP 配置：**
 ```powershell
 Get-Content "$HOME\GameCourseAI\.mcp.json"
-Get-Content ".\.claude\settings.json"
-Invoke-WebRequest http://localhost:3000/mcp
+# 应显示 JSON 格式的 MCP 服务器配置
 ```
 
-如果浏览器或命令行访问 `http://localhost:3000/mcp` 没有响应，通常是 UE 编辑器还没重启、项目没有启用 `McpAutomationBridge`，或 Native MCP 没有在 Project Settings 中打开。
+---
 
-## CC Switch 安装说明
+## 各引擎连接配置
 
-CC Switch 是桌面应用，不按 npm 包处理。安装器会优先检测本机是否已安装；如果没有安装，会尝试从 GitHub latest release 下载 Windows MSI。机房网络不稳定时，教师可以提前把 MSI 放入离线缓存：
+### Unreal Engine 5
 
-```text
-<OfflineCache>\cc-switch\release.msi
+#### 前置条件
+
+- 已安装 Unreal Engine 5.7 或更高版本
+- 有一个 UE 项目（`.uproject` 文件）
+
+#### 安装步骤
+
+1. **打开 UE 项目**
+   - 启动 Unreal Editor
+   - 打开你的项目
+
+2. **保持编辑器运行**，打开新的 PowerShell 窗口
+
+3. **运行插件安装脚本**：
+   ```powershell
+   cd game-course-agents
+   .\scripts\install-unreal-mcp-bridge.ps1
+   ```
+
+4. **脚本会自动**：
+   - 检测正在运行的 UE 编辑器
+   - 找到项目文件和引擎路径
+   - 编译并安装 McpAutomationBridge 插件
+   - 配置 Native MCP
+
+5. **重启 Unreal Editor**
+
+6. **验证连接**：
+   - UE 编辑器右下角应显示 `MCP :3000`
+   - 或运行：
+     ```powershell
+     Invoke-WebRequest http://localhost:3000/mcp
+     ```
+
+#### 手动指定项目路径
+
+如果脚本无法自动检测，可以手动指定：
+
+```powershell
+.\scripts\install-unreal-mcp-bridge.ps1 `
+  -UnrealProjectPath "D:\MyProject\MyProject.uproject" `
+  -EnginePath "F:\Program Files\Epic Games\UE_5.7"
 ```
+
+### Unity
+
+1. 安装 Unity MCP Server 插件包
+2. 在 Unity 中导入插件
+3. 启用 MCP 服务
+4. 配置 `.mcp.json` 中的 Unity 连接
+
+详细步骤参考：https://github.com/AnkleBreaker-Studio/unity-mcp-server
+
+### Godot 4
+
+1. 下载 godot-mcp 插件
+2. 复制到项目的 `addons` 目录
+3. 在项目设置中启用插件
+4. 配置 autoload
+
+详细步骤参考：https://github.com/tugcantopaloglu/godot-mcp
+
+### Blender
+
+1. 安装 Blender 4.x 或更高版本
+2. 确保 `uvx` 已安装：
+   ```powershell
+   uvx --version
+   ```
+3. 在 Blender 中启用 MCP addon
+4. 安装器会自动配置 `.mcp.json`
+
+详细步骤参考：https://github.com/ahujasid/blender-mcp
+
+---
+
+## 下一步
+
+安装完成后，请阅读：
+
+- [示例提示词](example-prompts.md) - 学习如何与 AI 协作
+- [故障排查](troubleshooting.md) - 解决常见问题
+- [课堂验收步骤](course-smoke-tests.md) - 确认安装成功

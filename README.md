@@ -1,125 +1,322 @@
 # 游戏设计课程 AI Agent 辅助项目
 
-这个仓库提供一套面向 Windows 课堂的部署工具，让学生可以快速准备：
+> 让没有编程基础的学生也能快速搭建 AI 辅助游戏开发环境
 
-- Claude Code
-- CC Switch
-- Claude-Code-Game-Studios 课程工作区
-- Unreal Engine 5、Unity、Godot 4、Blender 的 MCP 连接入口
+这个项目帮你一键安装以下工具：
 
-V1 的目标是把 AI 工具链和软件连接层装好，而不是替学生安装 UE、Unity、Godot 或 Blender 这些大型软件本体。安装器会检测它们是否存在；没安装时记录为 `SKIP/WARN`，不会让整套流程失败。
+| 工具 | 作用 |
+|------|------|
+| **Claude Code** | AI 编程助手，可以在终端里和你对话、帮你写代码 |
+| **CC Switch** | 切换不同的 AI 服务提供商（比如切换不同的 API） |
+| **Claude-Code-Game-Studios** | 游戏开发专用 AI 代理模板，包含策划、美术、程序等专业角色 |
+| **引擎连接工具** | 让 AI 能直接操作 Unreal Engine、Unity、Godot、Blender |
 
-## 快速开始
+---
 
-学生电脑建议先准备：
+## 安装前准备
 
-- Git
-- Node.js LTS（需要 `node` 和 `npm`）
-- Python 3.12 或 Python Launcher（`py`）
-- 可选：`uv`/`uvx`、WSL2
-- 已安装的课程软件，例如 Unreal Engine 5.7、Unity、Godot 4 或 Blender
+在运行安装器之前，你需要先安装以下**免费软件**。
 
-在 Windows PowerShell 里运行：
+### 必需软件
+
+| 软件 | 下载地址 | 说明 |
+|------|----------|------|
+| **Git** | https://git-scm.com/download/win | 代码版本管理工具，安装时一路点"Next"即可 |
+| **Node.js** | https://nodejs.org/ | 选择 **LTS 版本**（长期支持版），安装时一路点"Next" |
+
+### 可选软件
+
+| 软件 | 说明 |
+|------|------|
+| **Python 3.12** | 部分引擎连接功能需要，从 [python.org](https://www.python.org/downloads/) 下载 |
+| **uv** | 更快的 Python 包管理器，从 [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) 安装 |
+| **WSL2** | Windows 子系统 Linux，适合需要 Linux 工具链的高级用户 |
+
+### 游戏引擎（按需安装）
+
+本项目**不会自动安装**这些大型软件，但会检测它们是否存在：
+
+- **Unreal Engine 5** - 从 Epic Games Launcher 安装
+- **Unity** - 从 Unity Hub 安装
+- **Godot 4** - 从 godotengine.org 下载
+- **Blender 4.x** - 从 blender.org 下载
+
+---
+
+## 安装步骤
+
+### 第一步：下载本项目
+
+**方法 A：使用 Git（推荐）**
+
+1. 按 `Win + R`，输入 `cmd`，按回车打开命令提示符
+2. 复制粘贴以下命令并按回车：
+
+```powershell
+git clone https://github.com/leijieming/game-course-agents.git
+cd game-course-agents
+```
+
+**方法 B：直接下载 ZIP**
+
+1. 访问 https://github.com/leijieming/game-course-agents
+2. 点击绿色的 **Code** 按钮
+3. 选择 **Download ZIP**
+4. 解压后进入文件夹
+
+### 第二步：预览安装内容（推荐）
+
+在正式安装前，可以先预览安装器会做什么：
+
+1. 在项目文件夹中，按住 `Shift` 键，在空白处**右键点击**
+2. 选择 **"在此处打开 PowerShell 窗口"** 或 **"在终端中打开"**
+3. 复制粘贴以下命令并按回车：
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-.\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -IncludeWsl -ConfigureApi
+.\install.ps1 -DryRun
 ```
 
-首次课堂建议先 dry-run：
+这会显示安装器将执行的所有操作，但不会真正安装。
+
+### 第三步：执行安装
+
+确认预览内容无误后，运行正式安装：
 
 ```powershell
-.\install.ps1 -DryRun -IncludeWsl
+.\install.ps1
 ```
 
-安装完成后查看：
+**安装过程说明：**
+
+- 安装器会自动检测你电脑上已安装的软件
+- 缺少的工具会自动安装，已安装的会跳过
+- 整个过程大约需要 5-15 分钟，取决于网络速度
+
+**如果需要配置 API 密钥：**
 
 ```powershell
+.\install.ps1 -ConfigureApi
+```
+
+安装器会提示你输入：
+1. **Provider name** - 服务商名称（如 `anthropic`、`openai` 等）
+2. **Base URL** - API 地址（可直接按回车使用默认值）
+3. **API key** - 你的密钥（输入时不会显示，这是安全设计）
+
+### 第四步：验证安装
+
+安装完成后，检查是否成功：
+
+```powershell
+# 检查 Claude Code 是否安装成功
+claude --version
+
+# 查看健康报告
 Get-Content "$HOME\GameCourseAI\health-report.json"
 ```
 
-## Unreal Engine 5.7 与 MCP
+---
 
-`unreal` 模块会：
+## 如何使用
 
-- 从 Epic Launcher 安装清单和常见安装目录检测 UE5，支持安装在非 C 盘的 `UE_5.x`。
-- 使用 `ChiR24/Unreal_mcp` 的 `McpAutomationBridge` 插件作为 UE 侧服务。
-- 把 Claude Code 的项目级 `.mcp.json` 配置为 HTTP MCP server。
-- 默认连接 `http://localhost:3000/mcp`。
+### 启动 Claude Code
 
-只配置 UE MCP 相关内容可以运行：
+1. 打开 PowerShell 或命令提示符
+2. 进入课程工作区：
 
 ```powershell
-.\install.ps1 -WorkspacePath "$HOME\GameCourseAI" -Modules toolchain,game-studios,unreal
+cd "$HOME\GameCourseAI"
 ```
 
-安装完成后，`$HOME\GameCourseAI\.mcp.json` 会包含 `unreal-engine` MCP server。要把 UE 插件安装到某个项目，可以先打开 `.uproject`，然后运行：
+3. 启动 Claude Code：
 
 ```powershell
-.\scripts\install-unreal-mcp-bridge.ps1 -WorkspacePath "$HOME\GameCourseAI"
+claude
 ```
 
-脚本会优先检测当前正在运行的 Unreal Editor 项目，构建并安装 `McpAutomationBridge`，写入项目 `Config/DefaultGame.ini`，并生成项目级 `.claude/settings.json` 和 `.mcp.json`。完成后必须重启 UE 编辑器，看到右下角 `MCP :3000` 后，在 UE 项目目录运行 `claude`。
+### 首次使用
 
-## 仓库结构
+启动后，输入以下命令开始：
 
-```text
-install.ps1                 主安装入口
-manifests/                  每个模块的检测、安装、配置、验证声明
-examples/mcp/               Claude Code 项目级 MCP 示例
-docs/getting-started.md     课堂安装说明
-docs/course-smoke-tests.md  课堂验收步骤
-docs/troubleshooting.md     常见问题排查
-tests/                      Node.js 静态契约测试
+```
+/start
 ```
 
-## 设计原则
+这会显示游戏开发工作流程选项，包括：
+- 游戏策划阶段
+- 美术设计阶段
+- 程序开发阶段
+- 测试与优化
 
-- 不收集学生密钥，不把密钥写进仓库或日志。
-- 默认新建课程工作区，也支持合并到已有项目；合并前会备份冲突路径。
-- 原生 Windows 负责桌面软件插件和路径检测，WSL2 负责 Linux 命令行工具链。
-- 每个软件模块独立，可单独跳过、重跑和排查。
+### 常用命令
 
-## 常用命令
+| 命令 | 作用 |
+|------|------|
+| `/help` | 显示帮助信息 |
+| `/start` | 开始游戏开发工作流 |
+| `/clear` | 清空对话历史 |
+| `/config` | 打开设置 |
 
-只配置 Claude Code、CC Switch 和 Game Studios：
+---
+
+## 连接游戏引擎
+
+### Unreal Engine 5
+
+1. **先打开你的 UE 项目**（用 Unreal Editor 打开 `.uproject` 文件）
+2. 保持 UE 编辑器运行，打开新的 PowerShell 窗口
+3. 运行以下命令安装插件：
 
 ```powershell
-.\install.ps1 -Modules toolchain,claude-code,cc-switch,game-studios
+cd game-course-agents
+.\scripts\install-unreal-mcp-bridge.ps1
 ```
 
-只配置 Claude Code、Game Studios 和 Unreal MCP 客户端入口：
+4. **重启 Unreal Editor**
+5. 确认右下角显示 `MCP :3000`
+6. 在 UE 项目文件夹中运行 `claude`
+
+### Unity / Godot / Blender
+
+这些引擎的连接需要额外安装对应插件，详见 [docs/getting-started.md](docs/getting-started.md)。
+
+---
+
+## 常见问题
+
+### PowerShell 提示"无法加载文件，因为在此系统上禁止运行脚本"
+
+运行以下命令临时允许脚本执行：
 
 ```powershell
-.\install.ps1 -Modules toolchain,claude-code,game-studios,unreal
+Set-ExecutionPolicy -Scope Process Bypass -Force
 ```
 
-使用离线缓存：
+### 安装器显示某个软件是 SKIP
+
+这表示安装器没有找到该软件，但不影响其他功能。你可以：
+- 按需安装对应的软件
+- 之后重新运行安装器
+
+### Claude Code 无法启动
+
+1. 确认 Node.js 已正确安装：
 
 ```powershell
-.\install.ps1 -OfflineCache "D:\game-course-cache"
+node --version
+npm --version
 ```
 
-合并到已有项目：
+2. 手动安装 Claude Code：
 
 ```powershell
-.\install.ps1 -WorkspacePath "D:\MyUnityGame" -GameStudiosMode merge
+npm install -g @anthropic-ai/claude-code
 ```
 
-## 上游项目
+### CC Switch 无法使用
 
-- Claude Code: https://docs.anthropic.com/en/docs/claude-code/setup
-- CC Switch: https://github.com/farion1231/cc-switch ，Windows 版优先使用 Releases 中的 MSI/Portable 包。
-- Claude-Code-Game-Studios: https://github.com/leijieming/Claude-Code-Game-Studios
-- Unreal MCP Automation Bridge: https://github.com/ChiR24/Unreal_mcp
-- Unity MCP Server: https://github.com/AnkleBreaker-Studio/unity-mcp-server
-- Godot MCP: https://github.com/tugcantopaloglu/godot-mcp
-- Blender MCP: https://github.com/ahujasid/blender-mcp
+1. 打开 CC Switch 应用程序（在开始菜单搜索 "CC Switch"）
+2. 在应用界面中手动配置服务商信息
+3. 不要在聊天、截图或代码中分享你的 API 密钥
 
-## 开发检查
+### 想重新安装
 
-```bash
-npm test
+删除工作区后重新运行安装器：
+
+```powershell
+Remove-Item -Recurse -Force "$HOME\GameCourseAI"
+.\install.ps1
 ```
 
-CI 会检查 manifest 结构、入口文件、MCP 示例、文档骨架、PowerShell 语法和安装器 dry-run。
+### 合并到已有项目
+
+如果你已有游戏项目，可以将模板合并进去：
+
+```powershell
+.\install.ps1 -WorkspacePath "D:\MyGameProject" -GameStudiosMode merge
+```
+
+原有文件会被备份到 `.backups` 文件夹。
+
+---
+
+## 进阶用法
+
+### 离线安装（适合网络不稳定的机房）
+
+教师可以提前准备离线缓存：
+
+```powershell
+.\scripts\prepare-offline-cache.ps1 -CachePath "D:\offline-cache"
+```
+
+学生使用离线缓存安装：
+
+```powershell
+.\install.ps1 -OfflineCache "D:\offline-cache"
+```
+
+### 只安装特定模块
+
+```powershell
+# 只安装 Claude Code 和 Game Studios
+.\install.ps1 -Modules toolchain,claude-code,game-studios
+
+# 只配置 Unreal 连接
+.\install.ps1 -Modules unreal
+```
+
+### 启用 WSL2 支持
+
+```powershell
+.\install.ps1 -IncludeWsl
+```
+
+---
+
+## 文件结构说明
+
+```
+game-course-agents/
+├── install.ps1          # 主安装脚本
+├── manifests/           # 各模块的安装配置
+├── scripts/             # 辅助脚本
+│   ├── install-unreal-mcp-bridge.ps1  # UE 插件安装
+│   └── prepare-offline-cache.ps1      # 离线缓存准备
+├── examples/mcp/        # MCP 配置示例
+├── docs/                # 详细文档
+│   ├── getting-started.md    # 详细安装指南
+│   ├── troubleshooting.md    # 故障排查
+│   ├── course-smoke-tests.md # 课堂验收步骤
+│   └── example-prompts.md    # 示例提示词
+└── tests/               # 自动化测试
+```
+
+---
+
+## 获取帮助
+
+- **详细安装指南**：[docs/getting-started.md](docs/getting-started.md)
+- **故障排查**：[docs/troubleshooting.md](docs/troubleshooting.md)
+- **问题反馈**：https://github.com/leijieming/game-course-agents/issues
+
+---
+
+## 相关项目
+
+| 项目 | 说明 |
+|------|------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | 官方文档 |
+| [CC Switch](https://github.com/farion1231/cc-switch) | 服务商切换工具 |
+| [Claude-Code-Game-Studios](https://github.com/leijieming/Claude-Code-Game-Studios) | 游戏开发代理模板 |
+| [Unreal MCP](https://github.com/ChiR24/Unreal_mcp) | UE 连接插件 |
+| [Unity MCP](https://github.com/AnkleBreaker-Studio/unity-mcp-server) | Unity 连接插件 |
+| [Godot MCP](https://github.com/tugcantopaloglu/godot-mcp) | Godot 连接插件 |
+| [Blender MCP](https://github.com/ahujasid/blender-mcp) | Blender 连接插件 |
+
+---
+
+## 许可证
+
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE)。
