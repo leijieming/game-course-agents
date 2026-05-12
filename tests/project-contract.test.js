@@ -135,6 +135,24 @@ test("start menu offers selective install, environment setup and guarded removal
   }
 });
 
+test("start menu preset dry-run binds interactive switch choices", { skip: process.platform !== "win32" }, () => {
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "scripts/start-menu.ps1")],
+    {
+      cwd: root,
+      encoding: "utf8",
+      input: "1\r\n\r\ny\r\n\r\n0\r\n",
+      timeout: 120000,
+    },
+  );
+
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /Running install\.ps1 .* -DryRun/);
+  assert.match(result.stdout, /\[SKIP\] report: Dry-run mode/);
+});
+
 test("CC Switch installation uses Windows releases instead of npm package guesswork", () => {
   const install = readFileSync(join(root, "install.ps1"), "utf8");
   const manifest = readJson("manifests/cc-switch.json");

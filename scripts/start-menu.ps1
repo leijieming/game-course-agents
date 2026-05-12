@@ -118,9 +118,9 @@ function Build-InstallArguments {
     [Parameter(Mandatory)][string[]]$Modules,
     [string]$OfflineCache = "",
     [string]$GameStudiosMode = "new",
-    [switch]$DryRun,
-    [switch]$IncludeWsl,
-    [switch]$ConfigureApi
+    [bool]$DryRun = $false,
+    [bool]$IncludeWsl = $false,
+    [bool]$ConfigureApi = $false
   )
 
   $arguments = @(
@@ -179,17 +179,27 @@ function Invoke-PlannedInstall {
     [Parameter(Mandatory)][string[]]$Modules,
     [string]$OfflineCache = "",
     [string]$GameStudiosMode = "new",
-    [switch]$DryRun,
-    [switch]$IncludeWsl,
-    [switch]$ConfigureApi
+    [bool]$DryRun = $false,
+    [bool]$IncludeWsl = $false,
+    [bool]$ConfigureApi = $false
   )
 
-  if (-not (Confirm-InstallPlan -WorkspacePath $WorkspacePath -Modules $Modules -OfflineCache $OfflineCache -GameStudiosMode $GameStudiosMode -DryRun:[bool]$DryRun -IncludeWsl:[bool]$IncludeWsl -ConfigureApi:[bool]$ConfigureApi)) {
+  $plan = @{
+    WorkspacePath = $WorkspacePath
+    Modules = @($Modules)
+    OfflineCache = $OfflineCache
+    GameStudiosMode = $GameStudiosMode
+    DryRun = $DryRun
+    IncludeWsl = $IncludeWsl
+    ConfigureApi = $ConfigureApi
+  }
+
+  if (-not (Confirm-InstallPlan @plan)) {
     Write-Host "Cancelled."
     return 0
   }
 
-  $arguments = Build-InstallArguments -WorkspacePath $WorkspacePath -Modules $Modules -OfflineCache $OfflineCache -GameStudiosMode $GameStudiosMode -DryRun:$DryRun -IncludeWsl:$IncludeWsl -ConfigureApi:$ConfigureApi
+  $arguments = Build-InstallArguments @plan
   return (Invoke-Installer -Arguments $arguments)
 }
 
@@ -218,7 +228,17 @@ function Invoke-InstallWizard {
   $configureApi = Read-YesNo -Prompt "Configure API provider during install?" -Default $false
   $dryRun = Read-YesNo -Prompt "Preview only with -DryRun?" -Default $false
 
-  return (Invoke-PlannedInstall -WorkspacePath $workspacePath -Modules $selectedModules -OfflineCache $offlineCache -GameStudiosMode $mode -DryRun:$dryRun -IncludeWsl:$includeWsl -ConfigureApi:$configureApi)
+  $plan = @{
+    WorkspacePath = $workspacePath
+    Modules = @($selectedModules)
+    OfflineCache = $offlineCache
+    GameStudiosMode = $mode
+    DryRun = $dryRun
+    IncludeWsl = $includeWsl
+    ConfigureApi = $configureApi
+  }
+
+  return (Invoke-PlannedInstall @plan)
 }
 
 function Invoke-PresetInstall {
@@ -230,7 +250,15 @@ function Invoke-PresetInstall {
   )
 
   $workspacePath = Read-TextOrDefault -Prompt "Workspace path" -Default $Script:DefaultWorkspace
-  return (Invoke-PlannedInstall -WorkspacePath $workspacePath -Modules $Modules -DryRun:$DryRun -IncludeWsl:$IncludeWsl -ConfigureApi:$ConfigureApi)
+  $plan = @{
+    WorkspacePath = $workspacePath
+    Modules = @($Modules)
+    DryRun = [bool]$DryRun
+    IncludeWsl = [bool]$IncludeWsl
+    ConfigureApi = [bool]$ConfigureApi
+  }
+
+  return (Invoke-PlannedInstall @plan)
 }
 
 function Invoke-EnvironmentInstaller {
