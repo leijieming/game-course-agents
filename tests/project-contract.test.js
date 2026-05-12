@@ -23,6 +23,7 @@ test("repository exposes the planned course entrypoints", () => {
     "examples/mcp/claude-code.mcp.json",
     "scripts/prepare-offline-cache.ps1",
     "scripts/install-unreal-mcp-bridge.ps1",
+    "start-here.cmd",
     ".github/workflows/ci.yml",
   ]) {
     assert.equal(existsSync(join(root, path)), true, `${path} should exist`);
@@ -94,6 +95,16 @@ test("installer dry-run completes on Windows PowerShell", { skip: process.platfo
   assert.equal(result.error, undefined);
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /\[SKIP\] report: Dry-run mode/);
+});
+
+test("drag-and-run launcher bypasses PowerShell execution policy", () => {
+  const launcher = readFileSync(join(root, "start-here.cmd"), "utf8");
+
+  assert.match(launcher, /powershell\.exe/i);
+  assert.match(launcher, /-ExecutionPolicy\s+Bypass/i);
+  assert.match(launcher, /-File\s+"%INSTALLER%"/i);
+  assert.match(launcher, /%~dp0install\.ps1/i);
+  assert.match(launcher, /%\*/);
 });
 
 test("CC Switch installation uses Windows releases instead of npm package guesswork", () => {

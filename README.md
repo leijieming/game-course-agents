@@ -77,6 +77,12 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 .\install.ps1 -DryRun
 ```
 
+也可以把 `start-here.cmd` 直接拖入终端窗口，按回车运行。预览安装内容时，在拖入后的路径后面加一个空格和 `-DryRun`：
+
+```powershell
+.\start-here.cmd -DryRun
+```
+
 这会显示安装器将执行的所有操作，但不会真正安装。
 
 如果 `-DryRun` 在执行前就提示 `字符串缺少终止符: "@`，请先拉取最新 `main` 或重新下载 zip 包；这是旧安装脚本里的损坏 here-string，不是执行策略问题。更多排查见 `docs/troubleshooting.md`。
@@ -88,6 +94,8 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 ```powershell
 .\install.ps1
 ```
+
+最简单的方式：把 `start-here.cmd` 拖入 PowerShell、Windows Terminal 或命令提示符，按回车即可。这个入口会自动用 `-ExecutionPolicy Bypass` 调用 `install.ps1`，不需要先手动执行 `Set-ExecutionPolicy`。
 
 **安装过程说明：**
 
