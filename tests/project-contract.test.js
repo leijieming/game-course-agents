@@ -15,6 +15,7 @@ test("repository exposes the planned course entrypoints", () => {
   for (const path of [
     "install.ps1",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
     "docs/getting-started.md",
     "docs/course-smoke-tests.md",
@@ -30,6 +31,24 @@ test("repository exposes the planned course entrypoints", () => {
     ".github/workflows/ci.yml",
   ]) {
     assert.equal(existsSync(join(root, path)), true, `${path} should exist`);
+  }
+});
+
+test("release metadata documents v1.1.0", () => {
+  const packageJson = readJson("package.json");
+  const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+
+  assert.equal(packageJson.version, "1.1.0");
+
+  for (const token of [
+    "## v1.1.0",
+    "start-here.cmd",
+    "selective install",
+    "guarded removal",
+    "zh-CN",
+    "Unreal MCP",
+  ]) {
+    assert.ok(changelog.includes(token), `CHANGELOG.md should contain ${token}`);
   }
 });
 
