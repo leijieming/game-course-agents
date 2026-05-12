@@ -15,6 +15,8 @@ param(
   [switch]$DryRun,
   [switch]$IncludeWsl,
   [switch]$ConfigureApi,
+  [ValidateSet("zh-CN", "en-US")]
+  [string]$Language = "en-US",
   [ValidateSet("new", "merge")]
   [string]$GameStudiosMode = "new",
   [string[]]$Modules = @(
@@ -46,6 +48,8 @@ $Modules = @(
 
 $Script:Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Script:ManifestRoot = Join-Path $Script:Root "manifests"
+. (Join-Path $Script:Root "scripts\i18n.ps1")
+Initialize-I18n -Root $Script:Root -Language $Language
 $Script:KnownToolPaths = @(
   "C:\Program Files\nodejs",
   (Join-Path $env:APPDATA "npm"),
@@ -57,6 +61,7 @@ $Script:Report = [ordered]@{
   workspacePath = $WorkspacePath
   dryRun = [bool]$DryRun
   includeWsl = [bool]$IncludeWsl
+  language = $Language
   gameStudiosMode = $GameStudiosMode
   events = @()
 }
@@ -75,11 +80,13 @@ function Write-Step {
     [hashtable]$Data = @{}
   )
 
+  $displayMessage = Convert-StepMessage -Message $Message
+  $displayStatus = T -Key ("status.{0}" -f $Status) -Default $Status
   $entry = [ordered]@{
     time = (Get-Date).ToString("o")
     status = $Status
     module = $Module
-    message = $Message
+    message = $displayMessage
     data = $Data
   }
   $Script:Report.events += $entry
@@ -90,14 +97,41 @@ function Write-Step {
     "FAIL" { "Red" }
     default { "White" }
   }
-  Write-Host ("[{0}] {1}: {2}" -f $Status, $Module, $Message) -ForegroundColor $color
+  Write-Host ("[{0}] {1}: {2}" -f $displayStatus, $Module, $displayMessage) -ForegroundColor $color
+}
+
+function Convert-StepMessage {
+  param([Parameter(Mandatory)][string]$Message)
+
+  $translated = T -Key $Message -Default $Message
+  if ($translated -ne $Message) {
+    return $translated
+  }
+
+  if ($Message -match "^(?<name>.+) is available\.$") {
+    return (T -Key "pattern.command.available" -Default $Message -Values @{ name = $Matches.name })
+  }
+  if ($Message -match "^(?<name>.+) is missing\. Install it before running the full course setup\.$") {
+    return (T -Key "pattern.command.missing" -Default $Message -Values @{ name = $Matches.name })
+  }
+  if ($Message -match "^(?<name>.+) host app not found; bridge setup skipped\.$") {
+    return (T -Key "pattern.host.notFound" -Default $Message -Values @{ name = $Matches.name })
+  }
+  if ($Message -match "^(?<name>.+) host app detected; bridge record created\.$") {
+    return (T -Key "pattern.host.detected" -Default $Message -Values @{ name = $Matches.name })
+  }
+  if ($Message -match "^Python launcher is missing; (?<package>.+) install skipped\.$") {
+    return (T -Key "Python launcher is missing; {package} install skipped." -Default $Message -Values @{ package = $Matches.package })
+  }
+
+  return $Message
 }
 
 function Write-HealthReport {
   param([string]$Path = (Join-Path $WorkspacePath "health-report.json"))
 
   if ($DryRun) {
-    Write-Step -Status "SKIP" -Module "report" -Message "Dry-run mode: health report would be written." -Data @{ path = $Path }
+    Write-Step -Status "SKIP" -Module "report" -Message "report.dryRun" -Data @{ path = $Path }
     return
   }
 
@@ -106,7 +140,7 @@ function Write-HealthReport {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
   }
   $Script:Report | ConvertTo-Json -Depth 8 | Set-Content -Path $Path -Encoding UTF8
-  Write-Step -Status "PASS" -Module "report" -Message "Health report written." -Data @{ path = $Path }
+  Write-Step -Status "PASS" -Module "report" -Message "report.written" -Data @{ path = $Path }
 }
 
 function Read-Manifest {
@@ -282,9 +316,9 @@ function Configure-CcSwitch {
     return
   }
 
-  $providerName = Read-Host "Provider name for CC Switch"
-  $baseUrl = Read-Host "Provider base URL"
-  $apiKey = Read-Host -AsSecureString "API key"
+  $providerName = Read-Host (T -Key "Provider name for CC Switch" -Default "Provider name for CC Switch")
+  $baseUrl = Read-Host (T -Key "Provider base URL" -Default "Provider base URL")
+  $apiKey = Read-Host -AsSecureString (T -Key "API key" -Default "API key")
 
   if ($DryRun) {
     Write-Step -Status "SKIP" -Module "cc-switch" -Message "Dry-run provider import skipped." -Data @{ provider = $providerName; baseUrl = $baseUrl }
@@ -715,7 +749,7 @@ function Invoke-ModuleLifecycle {
 
 try {
   Ensure-Directory -Path $WorkspacePath
-  Write-Step -Status "PASS" -Module "installer" -Message "Installer started." -Data @{ modules = $Modules }
+  Write-Step -Status "PASS" -Module "installer" -Message "installer.started" -Data @{ modules = $Modules }
 
   foreach ($module in $Modules) {
     Invoke-ModuleLifecycle -Id $module

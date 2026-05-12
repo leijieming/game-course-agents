@@ -108,6 +108,21 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 移除功能会先列出将删除的目录和可选卸载项，并要求输入 `DELETE` 才会执行。它不会自动卸载 Git、Node.js、Python、Unreal、Unity、Godot 或 Blender 这类可能属于用户原有环境的大型软件。
 
+默认拖入 `start-here.cmd` 会显示中文菜单。需要英文界面时，可以运行：
+
+```powershell
+.\start-here.cmd -Language en-US
+.\install.ps1 -Language en-US -DryRun
+```
+
+也可以显式使用中文：
+
+```powershell
+.\install.ps1 -Language zh-CN -DryRun
+```
+
+中文文本位于 `locales/zh-CN.json`，脚本会在缺少翻译时自动回退到英文。
+
 **安装过程说明：**
 
 - 安装器会自动检测你电脑上已安装的软件

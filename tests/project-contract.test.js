@@ -21,6 +21,8 @@ test("repository exposes the planned course entrypoints", () => {
     "docs/example-prompts.md",
     "docs/troubleshooting.md",
     "examples/mcp/claude-code.mcp.json",
+    "locales/zh-CN.json",
+    "scripts/i18n.ps1",
     "scripts/prepare-offline-cache.ps1",
     "scripts/install-unreal-mcp-bridge.ps1",
     "scripts/start-menu.ps1",
@@ -68,6 +70,8 @@ test("install script supports dry-run, offline cache, native Windows, WSL and re
 
   for (const token of [
     "param(",
+    "$Language",
+    "Initialize-I18n",
     "$OfflineCache",
     "$DryRun",
     "$IncludeWsl",
@@ -86,6 +90,21 @@ test("install script supports dry-run, offline cache, native Windows, WSL and re
   assert.equal(/Write-(Host|Output).*(Api|Key|Secret|Token)/i.test(install), false);
 });
 
+test("Chinese language pack is structured for installer and setup menu", () => {
+  const languagePack = readJson("locales/zh-CN.json");
+  const i18n = readFileSync(join(root, "scripts/i18n.ps1"), "utf8");
+  const menu = readFileSync(join(root, "scripts/start-menu.ps1"), "utf8");
+
+  assert.equal(languagePack.language, "zh-CN");
+  assert.equal(typeof languagePack.strings["menu.title"], "string");
+  assert.equal(typeof languagePack.strings["installer.started"], "string");
+  assert.equal(typeof languagePack.strings["status.PASS"], "string");
+  assert.equal(typeof languagePack.strings["status.SKIP"], "string");
+  assert.ok(i18n.includes("function Initialize-I18n"));
+  assert.ok(i18n.includes("function T"));
+  assert.ok(menu.includes("-Language"));
+});
+
 test("installer dry-run completes on Windows PowerShell", { skip: process.platform !== "win32" }, () => {
   const result = spawnSync(
     "powershell.exe",
@@ -98,6 +117,40 @@ test("installer dry-run completes on Windows PowerShell", { skip: process.platfo
   assert.match(result.stdout, /\[SKIP\] report: Dry-run mode/);
 });
 
+test("installer and menu can run in Chinese", { skip: process.platform !== "win32" }, () => {
+  const installer = spawnSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      join(root, "install.ps1"),
+      "-Language",
+      "zh-CN",
+      "-Modules",
+      "toolchain",
+      "-DryRun",
+    ],
+    { cwd: root, encoding: "utf8", timeout: 120000 },
+  );
+
+  assert.equal(installer.error, undefined);
+  assert.equal(installer.status, 0, `${installer.stdout}\n${installer.stderr}`);
+  assert.match(installer.stdout, /安装器已启动/);
+  assert.match(installer.stdout, /模拟运行模式/);
+
+  const menu = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "scripts/start-menu.ps1"), "-Language", "zh-CN"],
+    { cwd: root, encoding: "utf8", input: "0\r\n", timeout: 120000 },
+  );
+
+  assert.equal(menu.error, undefined);
+  assert.equal(menu.status, 0, `${menu.stdout}\n${menu.stderr}`);
+  assert.match(menu.stdout, /游戏课程 Agent 安装菜单/);
+});
+
 test("drag-and-run launcher bypasses PowerShell execution policy", () => {
   const launcher = readFileSync(join(root, "start-here.cmd"), "utf8");
 
@@ -106,6 +159,19 @@ test("drag-and-run launcher bypasses PowerShell execution policy", () => {
   assert.match(launcher, /-File\s+"%START_MENU%"/i);
   assert.match(launcher, /%~dp0scripts\\start-menu\.ps1/i);
   assert.match(launcher, /%\*/);
+});
+
+test("drag-and-run launcher forwards dry-run into Chinese setup", { skip: process.platform !== "win32" }, () => {
+  const result = spawnSync(
+    "cmd.exe",
+    ["/d", "/c", "echo.| .\\start-here.cmd -DryRun"],
+    { cwd: root, encoding: "utf8", timeout: 120000 },
+  );
+
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /正在运行 install\.ps1 -Language zh-CN -DryRun/);
+  assert.match(result.stdout, /安装器已启动/);
 });
 
 test("start menu offers selective install, environment setup and guarded removal", () => {
@@ -138,7 +204,7 @@ test("start menu offers selective install, environment setup and guarded removal
 test("start menu preset dry-run binds interactive switch choices", { skip: process.platform !== "win32" }, () => {
   const result = spawnSync(
     "powershell.exe",
-    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "scripts/start-menu.ps1")],
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "scripts/start-menu.ps1"), "-Language", "en-US"],
     {
       cwd: root,
       encoding: "utf8",
@@ -196,6 +262,7 @@ test("CI validates PowerShell, manifests, docs and installer dry-run", () => {
     "npm test",
     "PSScriptAnalyzer",
     "Parser]::ParseFile",
+    "./scripts/i18n.ps1",
     "./scripts/start-menu.ps1",
     "./install.ps1 -DryRun -IncludeWsl",
   ]) {
