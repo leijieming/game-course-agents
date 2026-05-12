@@ -23,6 +23,7 @@ test("repository exposes the planned course entrypoints", () => {
     "examples/mcp/claude-code.mcp.json",
     "scripts/prepare-offline-cache.ps1",
     "scripts/install-unreal-mcp-bridge.ps1",
+    "scripts/start-menu.ps1",
     "start-here.cmd",
     ".github/workflows/ci.yml",
   ]) {
@@ -102,9 +103,36 @@ test("drag-and-run launcher bypasses PowerShell execution policy", () => {
 
   assert.match(launcher, /powershell\.exe/i);
   assert.match(launcher, /-ExecutionPolicy\s+Bypass/i);
-  assert.match(launcher, /-File\s+"%INSTALLER%"/i);
-  assert.match(launcher, /%~dp0install\.ps1/i);
+  assert.match(launcher, /-File\s+"%START_MENU%"/i);
+  assert.match(launcher, /%~dp0scripts\\start-menu\.ps1/i);
   assert.match(launcher, /%\*/);
+});
+
+test("start menu offers selective install, environment setup and guarded removal", () => {
+  const menu = readFileSync(join(root, "scripts/start-menu.ps1"), "utf8");
+
+  for (const token of [
+    "function Show-Menu",
+    "function Invoke-InstallWizard",
+    "function Invoke-EnvironmentInstaller",
+    "function Invoke-RemoveCourseInstall",
+    "function Confirm-Delete",
+    "DELETE",
+    "-Modules",
+    "toolchain",
+    "claude-code",
+    "cc-switch",
+    "game-studios",
+    "unreal",
+    "unity",
+    "godot",
+    "blender",
+    "winget",
+    "npm uninstall -g @anthropic-ai/claude-code",
+    "Remove-Item -LiteralPath",
+  ]) {
+    assert.ok(menu.includes(token), `scripts/start-menu.ps1 should contain ${token}`);
+  }
 });
 
 test("CC Switch installation uses Windows releases instead of npm package guesswork", () => {
@@ -150,6 +178,7 @@ test("CI validates PowerShell, manifests, docs and installer dry-run", () => {
     "npm test",
     "PSScriptAnalyzer",
     "Parser]::ParseFile",
+    "./scripts/start-menu.ps1",
     "./install.ps1 -DryRun -IncludeWsl",
   ]) {
     assert.ok(ci.includes(token), `CI should contain ${token}`);

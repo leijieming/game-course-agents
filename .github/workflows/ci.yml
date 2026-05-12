@@ -33,7 +33,8 @@ jobs:
           $files = @(
             "./install.ps1",
             "./scripts/prepare-offline-cache.ps1",
-            "./scripts/install-unreal-mcp-bridge.ps1"
+            "./scripts/install-unreal-mcp-bridge.ps1",
+            "./scripts/start-menu.ps1"
           )
           foreach ($file in $files) {
             $tokens = $null
@@ -50,7 +51,8 @@ jobs:
           $files = @(
             "./install.ps1",
             "./scripts/prepare-offline-cache.ps1",
-            "./scripts/install-unreal-mcp-bridge.ps1"
+            "./scripts/install-unreal-mcp-bridge.ps1",
+            "./scripts/start-menu.ps1"
           )
           foreach ($file in $files) {
             Invoke-ScriptAnalyzer -Path $file -Recurse -Severity Error

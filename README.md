@@ -97,6 +97,17 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 最简单的方式：把 `start-here.cmd` 拖入 PowerShell、Windows Terminal 或命令提示符，按回车即可。这个入口会自动用 `-ExecutionPolicy Bypass` 调用 `install.ps1`，不需要先手动执行 `Set-ExecutionPolicy`。
 
+`start-here.cmd` 会先打开菜单，让你确认安装内容后再执行：
+
+- 预览默认安装
+- 安装完整课程工作区
+- 自选安装 Claude Code、CC Switch、Game Studios、UE/Unity/Godot/Blender MCP 等模块
+- 安装缺失的环境工具：Git、Node.js LTS、Python 3.12、uv
+- 配置 API Provider
+- 一键移除课程安装项
+
+移除功能会先列出将删除的目录和可选卸载项，并要求输入 `DELETE` 才会执行。它不会自动卸载 Git、Node.js、Python、Unreal、Unity、Godot 或 Blender 这类可能属于用户原有环境的大型软件。
+
 **安装过程说明：**
 
 - 安装器会自动检测你电脑上已安装的软件
