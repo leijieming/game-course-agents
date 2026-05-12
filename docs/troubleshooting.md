@@ -39,6 +39,29 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 这只会影响当前窗口，关闭后恢复原设置。**不要**要求学生永久修改系统执行策略。
 
+### 问题：`install.ps1 -DryRun` 提示 `字符串缺少终止符: "@`
+
+**原因**：PowerShell 在执行前解析脚本失败，通常说明当前目录里的 `install.ps1` 不是最新版本，或来自旧 zip 包。
+
+**解决方案**：
+
+先确认脚本语法：
+
+```powershell
+$tokens=$null; $errors=$null
+[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path .\install.ps1), [ref]$tokens, [ref]$errors) > $null
+$errors
+```
+
+如果 `$errors` 有内容，请拉取或重新下载最新 `main` 分支后再运行：
+
+```powershell
+git pull origin main
+.\install.ps1 -DryRun
+```
+
+如果是浏览器下载的 zip 包，重新下载最新 zip；旧包里可能还包含损坏的重复 here-string 文本块。
+
 ---
 
 ### 问题：`npm install -g @anthropic-ai/claude-code` 失败

@@ -379,7 +379,8 @@ function Configure-UnrealMcp {
     $config = [pscustomobject]@{ mcpServers = [pscustomobject]@{} }
   } else {
     $config = Get-Content -Raw -Path $target | ConvertFrom-Json
-    if (-not $config.mcpServers) {
+    $mcpServersProperty = $config.PSObject.Properties["mcpServers"]
+    if ((-not $mcpServersProperty) -or (-not $mcpServersProperty.Value)) {
       $config | Add-Member -NotePropertyName "mcpServers" -NotePropertyValue ([pscustomobject]@{}) -Force
     }
   }
@@ -652,16 +653,6 @@ function Configure-EngineBridge {
   Ensure-Directory -Path $moduleRoot
 
   $readme = Join-Path $moduleRoot "README.local.md"
-  $content = @"
-# $BridgeName 本地连接记录
-
-- Host path: $path
-- Upstream: $Upstream
-- Created: $(Get-Date -Format "o")
-
-此目录只记录课程安装器检测到的本机路径和上游适配器。实际插件安装步骤见 docs/getting-started.md。
-"@
-
   $content = @(
     "# $BridgeName local bridge record",
     "",

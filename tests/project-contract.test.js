@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -81,6 +82,18 @@ test("install script supports dry-run, offline cache, native Windows, WSL and re
   }
 
   assert.equal(/Write-(Host|Output).*(Api|Key|Secret|Token)/i.test(install), false);
+});
+
+test("installer dry-run completes on Windows PowerShell", { skip: process.platform !== "win32" }, () => {
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(root, "install.ps1"), "-DryRun"],
+    { cwd: root, encoding: "utf8", timeout: 120000 },
+  );
+
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /\[SKIP\] report: Dry-run mode/);
 });
 
 test("CC Switch installation uses Windows releases instead of npm package guesswork", () => {

@@ -79,6 +79,8 @@ Set-ExecutionPolicy -Scope Process Bypass -Force
 
 这会显示安装器将执行的所有操作，但不会真正安装。
 
+如果 `-DryRun` 在执行前就提示 `字符串缺少终止符: "@`，请先拉取最新 `main` 或重新下载 zip 包；这是旧安装脚本里的损坏 here-string，不是执行策略问题。更多排查见 `docs/troubleshooting.md`。
+
 ### 第三步：执行安装
 
 确认预览内容无误后，运行正式安装：
